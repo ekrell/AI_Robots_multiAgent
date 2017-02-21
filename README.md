@@ -9,10 +9,12 @@ in the simulator in place of the USV, the robot is called MARISA.
 
 ### Developers
 Arun Prassanth Ramaswamy Balasubramanian
+
 Clayton Dittman
+
 Evan Krell - evan.krell@tamucc.edu
 
-### Directoy Organization
+### Directory Organization
 		documentation: 
 		simulation: A version of the project based around the Morse simulator
 			lib: libraries, modules
