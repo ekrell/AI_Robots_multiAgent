@@ -27,7 +27,7 @@ Evan Krell - evan.krell@tamucc.edu
 
 ### Quick Start - Simulation
 Note that this is a very early stage. Some amount of organization/modularity is present, but
-in the case of setting up the MARISA robot. 
+in the case of setting up the MARISA robot... a quick test script is combined with the configuration script. 
 
 0. Software Requirements
 
@@ -44,7 +44,7 @@ in the case of setting up the MARISA robot.
 
 		morse run simulation/scenes/field_exercise_1.py
 
-3. Configure the robot named 'Susan' to be a MARISA UGV robot
+3. Configure the robot named 'Susan' to be a MARISA UGV robot (will run a test case)
 
 		python3 simulation/robots/marisa.py -n susan
 			
