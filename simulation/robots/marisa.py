@@ -14,6 +14,7 @@
 import pymorse
 import argparse
 import robomath as rm
+import time
 
 # === Functions: system ===
 
@@ -74,10 +75,21 @@ def get_orientation(robot):
     orientation = {'pitch':pose['pitch'], 'roll':pose['pitch'], 'yaw':pose['yaw']}
     return orientation
 
+def get_target(robot):
+    # Why does a 'get_destination' not exist as part of Morse?
+    return destination
+    
+def get_status(robot):
+    destination = robot['destination']
+    location =  get_position(robot)
+    status = { 'pos_x':location['x'], 'pos_y':location['y'], 'dest_x':destination['x'], 'dest_y':destination['y'] }
+    return status
+
 def cancel_target(robot):
     getattr(simu, robot['name']).waypoint.stop()
 
 def halt(robot):
+    robot['destination'] = {}
     # case 1: robot moving because of waypoint
     cancel_target(robot)
     # case 2: robot moving because of motionVW
@@ -88,6 +100,7 @@ def motion_circle(robot, radius, speed_angular):
     getattr(simu, robot['name']).motion.set_speed(speed_linear, speed_angular)
 
 def goto_target(robot, target, speed):
+    robot['destination'] = target
     getattr(simu, robot['name']).waypoint.publish(
             {'x':target['x'], 'y':target['y'], 'z':0.0,
                 'tolerance':0.5, 'speed':speed})
@@ -106,7 +119,7 @@ def circle_target(robot, target, radius, speed_transit, speed_angular):
     goto_target(robot, target_adj, speed_transit)
     # Begin cicular motion using LinearVelocity = (Radius)(AngularVelocity)
     while (getattr(simu, robot['name']).waypoint.get_status() == "Transit"):
-        simu.sleep(0.5)
+        time.sleep(0.5)
     halt(robot)
     motion_circle(robot, radius, speed_angular)
 
@@ -124,7 +137,7 @@ args = parser.parse_args()
 
 # A robot is a dictionary of info
 # Will fail if args not set => implicit argument verification
-robot = { 'name':args.name }
+robot = { 'name':args.name, 'destination':{} }
 
 with pymorse.Morse() as simu:
 
@@ -134,7 +147,8 @@ with pymorse.Morse() as simu:
         print (get_orientation(robot))
         goto_target(robot, {'x':-4, 'y':-3}, 1.0)
         while (getattr(simu, robot['name']).waypoint.get_status() == "Transit"):
-            simu.sleep(0.5)
+            print (str(get_status(robot)))
+            time.sleep(0.5)
         halt(robot)
         circle_target(robot, {'x':-7, 'y':-7}, 3, 2, 2)
 
