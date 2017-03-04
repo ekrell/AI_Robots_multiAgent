@@ -14,10 +14,17 @@
 # Import libraries
 import pymorse
 import argparse
-import robomath as rm
 import time
 
-# === Functions: system ===
+# Import interfaces
+from roboutils import get_status
+
+# Import behaviors
+from roboutils import ping
+from roboutils import goto_target
+from roboutils import return_home
+from roboutils import halt
+
 
 def systems_check(robot):
 
@@ -54,41 +61,6 @@ def systems_check(robot):
     print ("[+] Robot {0}: All systems online".format(robot['name']))
     return 0
 
-
-
-# === Functions: behaviors ===
-
-def ping(robot):
-    try:
-        ping = getattr(simu, robot['name'])
-    except:
-        ping = None
-    return ping
-
-def get_position(robot):
-    pose = getattr(simu, robot['name']).pose.get()
-    pos = {'x':pose['x'], 'y':pose['y'], 'z':pose['z']}
-    return pos
-
-def get_orientation(robot):
-    pose = getattr(simu, robot['name']).pose.get()
-    orientation = {'pitch':pose['pitch'], 'roll':pose['pitch'], 'yaw':pose['yaw']}
-    return orientation
-
-def cancel_target(robot):
-    getattr(simu, robot['name']).waypoint.stop()
-
-def halt(robot):
-    # case 1: robot moving because of waypoint
-    cancel_target(robot)
-    # case 2: robot moving because of motionVW
-    getattr(simu, robot['name']).motion.set_speed(0.0, 0.0)
-
-def goto_target(robot, target, speed):
-    getattr(simu, robot['name']).waypoint.publish(
-            {'x':target['x'], 'y':target['y'], 'z':0.0,
-                'tolerance':0.5, 'speed':speed})
-
 def clear_targets(robot):
     robot['targets'] = set()
 
@@ -116,20 +88,20 @@ args = parser.parse_args()
 
 # A robot is a dictionary of info
 # Will fail if args not set => implicit argument verification
-robot = { 'name':args.name,
-          # Set of targets to monitor 
-          'targets':set(), 
-          'MAX_TARGETS':2 }
 
 with pymorse.Morse() as simu:
 
     try:
+        robot = { 'name':args.name,
+         'simu':simu,
+         # Set of targets to monitor 
+         'targets':set(), 
+         'MAX_TARGETS':2 }
+
         systems_check(robot)
         targets = set(["susan"])
         init_targets(robot, targets)
 
-        print (get_position(robot))
-        print (get_orientation(robot))
         goto_target(robot, {'x':7, 'y':-3}, 1.0)
         while (getattr(simu, robot['name']).waypoint.get_status() == "Transit"):
             time.sleep(0.5)
