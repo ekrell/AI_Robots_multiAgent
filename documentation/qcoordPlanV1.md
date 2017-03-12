@@ -6,20 +6,31 @@ This document describes basic ideas for implementing an algorithm that allows a 
 ### Definitions
 
 TARGETS = the set of all target surface vehicles.
+
 TARGET = a single target surface vehicle such that TARGET is in TARGETS.
+
 (TARGET.POX_X, TARGET.POS_Y) = The coordinates for current location of TARGET, as broadcast by TARGET.
+
 (TARGET.DEST_X, TARGET.DEST_Y) = The coordinates for destination of TARGET, as broadcast by TARGET.
 
 UAV = the single UAV responsible for maintaining view of all TARGETS.
+
 (UAV.POX_X, UAV.POS_Y, UAV.POS_Z) = The coordinates for current location of UAV.
+
 UAV.WAYPOINT = (UAV.DEST_X, UAV.DEST.Y) = The coordinates for destination of UAV.
+
 UAV.DIR = The direction that UAV is facing within [0,360) degrees.
+
 UAV.SPEED = Current speed of UAV.
+
 UAV.MAX_SPEED = Maximum speed of UAV.
+
 (UAV.IMG_X, UAV.IMG_Y) = Origin point of rectangular camera image captured by UAV when sufficiently overhead.
+
 (UAV.IMG_X~, UAV.IMG_Y~) = Maximum corner point of rectangular camera image captured by UAV when sufficiently overhead.
 
 TARGET_DIST = Ideal distance to maintain from TARGETS (central point) in order keep in view.
+
 CURRENT_DIST = The current distance that UAV is from TARGETS (central point).
 
 ### Idea Overview
