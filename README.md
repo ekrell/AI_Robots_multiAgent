@@ -37,7 +37,7 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 
 1. Configure python path to find our libraries (!! Look for smoother solution)
 
-		export PYTHONPATH="${PYTHONPATH}:/<whatever_your_path>/AI_Robotics_multiAgent/simulation/lib"
+		export PYTHONPATH="${PYTHONPATH}:/<whatever_your_path>/AI_Robots_multiAgent/simulation/lib"
 
 
 2. Set up scene
