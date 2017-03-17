@@ -8,11 +8,13 @@ The target USV platform is the EMILY (emilyrobot.com). To differentiate, wheneve
 in the simulator in place of the USV, the robot is called MARISA. 
 
 ### Developers
+---------NAME--------------------------		---------eMail------------	-----------Phone #-------------
+
 Arun Prassanth Ramaswamy Balasubramanian
 
-Clayton Dittman
+Clayton Dittman					clayton.dittman@tamu.edu 	
 
-Evan Krell - evan.krell@tamucc.edu
+Evan Krell					evan.krell@tamucc.edu
 
 ### Directory Organization
 		documentation: 
@@ -51,3 +53,20 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 
 
 
+### MacOS Setup- Simulation (Work in Progress)
+# Resource https://github.com/morse-simulator/homebrew-morse
+
+1. Install brew package manager
+	In terminal	'/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+ 
+2. Install python3
+	In terminal	'brew install python3'
+
+3. Add morse-simulator tap
+	In terminal 'brew tap morse-simulator/morse'
+
+4. Install morse-simulator
+	In terminal 'brew install morse-simulator --with-pymorse'
+
+5. Install pymorse libraries via pip
+	In terminal 'pip3 install pymorse'
