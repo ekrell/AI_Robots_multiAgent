@@ -44,7 +44,7 @@ def motion_circle(robot, radius, speed_angular):
 def goto_target(robot, target, speed):
     robot['destination'] = target
     getattr(robot['simu'], robot['name']).waypoint.publish(
-            {'x':target['x'], 'y':target['y'], 'z':0.0,
+            {'x':target['x'], 'y':target['y'], 'z':10.0,
                 'tolerance':0.5, 'speed':speed})
 
 def circle_target(robot, target, radius, speed_transit, speed_angular):

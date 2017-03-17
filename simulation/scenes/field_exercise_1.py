@@ -46,7 +46,7 @@ motion_susan.add_interface ('socket')
 
 # Initialize GODOT
 godot = Quadrotor ()
-godot.translate (x = -3.0, y = -3.0, z = 5.0)
+godot.translate (x = -3.0, y = -3.0, z = 10.0)
 godot.properties (Object = True, Graspable = False, Label = "GODOT")
 pose_godot = Pose ()
 pose_godot.name = "pose"
@@ -54,6 +54,7 @@ godot.append(pose_godot)
 pose_godot.add_interface ('socket')
 waypoint_godot = Waypoint ()
 waypoint_godot.name = "waypoint"
+waypoint_godot.RemainAtDestination = True
 godot.append (waypoint_godot)
 waypoint_godot.add_interface ('socket')
 motion_godot = MotionVW ()
