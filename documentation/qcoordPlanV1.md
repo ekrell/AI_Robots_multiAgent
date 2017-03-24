@@ -3,6 +3,72 @@
 This document describes basic ideas for implementing an algorithm that allows a single UAV to constantly reposition itself to keep multiple surface vehicles in view.
 
 
+### Plain English Overview
+
+VERY MUCH a work in progress.. 
+
+Multiple USVs are at work and their mobility is provided by a 'Waypoint' actuator. 
+Each USV has a current position and a target position (next Waypoint).
+A single UAV is responsible for keeping all of the USVs in camera view.
+The UAV does not have to do any image analysis because the USV broadcasts its current and target position.
+
+
+
+Goals: Maximize USVs being in camera view. Minimize communication.
+
+Proposed architecture: A subsumption model whose layers handle various aspects of the behavior. 
+
+*Level -1: Choose USVs:*
+
+Relies on: USV positions, USV target positions. 
+
+Affects: Internal data structures.
+
+While the goal is to keep all in view, that might not be possible if sufficiently separate directions. 
+Checks the geometry of USV positions, USV targets positions, and camera specifications. 
+Could have parameters for the user to set thresholds. Should you give up entirely? Should you follow those that are going in general same direction? Etc. 
+
+
+*Level 0: Follow USVs:*
+
+Relies on: USV positions.
+
+Affects: Waypoint actuator, Velocity Actuator.
+
+UAV computes the centroid of the USVs and sets its waypoint for that centroid.
+In order to follow behind at some distance X, the speed is constantly affected by distance from X. 
+When UAV is outside X, the speed increases (up to MAX_SPEED) as it gets further and decreases as it gets closer. 
+When UAV is inside X, the speed slows as it gets more inward. 
+A simulated test already shows that it maintains a dynamic (roughly) equilibrium follow behavior for _one USV_. 
+This is cool because it did so without knowing the USV's direction (USV's waypoint).
+
+
+*Level 2: Maintain Camera View via altitude:*
+
+Relies on: USV positions.
+
+Affects: Altitude (via z-coord in Waypoint actuator??)
+
+Use geometry to ensure that USVs are in camera view. The desirable FOV is more overhead.. 'rectangular' since it is a clearer picture than skewed for both human viewers and potential image processing applications, either onboard or post-processing. 
+
+ 
+*Level 1: Anticipate direction:*
+
+Relies on: USV positions, USV target positions.
+
+Affects: Waypoint actuator, camera angle?
+
+UAV uses the 'overall' directions of USVs to make a smoother path that keeps USVs in view more. 
+Have not worked out the details, but instead of going into centroid, can set a waypoint that is a ahead or behind, but is along a the vector. 
+Could use camera geometry to be such that more of the empty space in front of USVs, rather than behind. 
+
+
+
+
+
+
+
+
 ### Definitions
 
 TARGETS = the set of all target surface vehicles.
