@@ -52,7 +52,7 @@ Affects: Altitude (via z-coord in Waypoint actuator??)
 Use geometry to ensure that USVs are in camera view. The desirable FOV is more overhead.. 'rectangular' since it is a clearer picture than skewed for both human viewers and potential image processing applications, either onboard or post-processing. 
 
  
-*Level 1: Anticipate direction:*
+*Level 3: Anticipate direction:*
 
 Relies on: USV positions, USV target positions.
 
@@ -61,6 +61,15 @@ Affects: Waypoint actuator, camera angle?
 UAV uses the 'overall' directions of USVs to make a smoother path that keeps USVs in view more. 
 Have not worked out the details, but instead of going into centroid, can set a waypoint that is a ahead or behind, but is along a the vector. 
 Could use camera geometry to be such that more of the empty space in front of USVs, rather than behind. 
+
+
+*Level 4: Smooth via models:*
+
+Relies on: ??
+
+Affects: ??
+
+Idea is to use something like Kahlman filter to achieve smoother movement. Don't know enough about this to really comment. 
 
 
 
