@@ -29,9 +29,9 @@ It is able to listen for messages broadcast from the TARGETS, but does not send 
 As a Quadcopter, QCOORD is able to hover and change speed more easily than a fixed wing. 
 Thus, its movement can be abstracted to resemble that of a surface vehicle at a given altitude. 
 
-### Core Tracking Algorithm
+### Core Tracking Algorithm:
 
-_Definitions_
+**Definitions**
 
 - N = number of TARGETS (also written as |TARGETS|)
 - Formation = the positions of the TARGETS as a whole at a given time 
@@ -44,7 +44,7 @@ _Definitions_
 - X.Trajectory = Centroid's set of predicted waypoints
 - R = Standoff distance from X
 
-_Focus Statement_
+**Focus Statement**
 
 The focus of this document is on the core algorithm for keeping TARGETS in FOV. 
 Also described is how it would interact with a larger system, 
@@ -56,7 +56,7 @@ For example, because of FAA restrictions or potential use case requirements, the
 This means that QCOORD cannot simply raise its altitude when the spread of TARGETS is too far apart,
 but nothing is stopping other system components from autonomously adjusting the altitude.
 
-_Basic Description_
+**Basic Descriptio**n
 
 The core algorithm works by following the centroid X while maintaining a speed, distance, and camera tilt angle
 that ensures InFOV(TARGETS) is TRUE.
@@ -66,21 +66,21 @@ should maintain an equilibrium standoff distance R.
 In order to maintain a smoother path, an extended Kalman filter (or something similar) could be applied.
 
 
-_Considerations_
+**Considerations**
 
-*Follow Behind*
+_Follow Behind_
 
 The purpose of such a system is to support sensory awareness. 
 This could be having QCOORD use image processing to aid the TARGETS with obstacle avoidance.
 Or, it could be to help human supervisors get a better idea of where the TARGETS are headed. 
 Thus, we deemed it appropriate to follow the TARGETS from behind and focus imagery on what is ahead. 
 
-*Centroid Approach*
+_Centroid Approach_
 
 Individual TARGETS could be very "stop and go" in their movement, or spend some time doing non-holonomic turning. 
 A simple way to consider following the group as a whole was the follow their centroid X. 
 
-*Change Speed*
+_Change Speed_
 
 Unlike much of the literature, which uses fixed-wing UAVs, QCOORD can change speed. 
 We are using a simple piecewise function that dynamically adjusts the speed based on the distance
@@ -88,32 +88,32 @@ from an observed centroid. The further out from R, speeds up to catch up. If QCO
 The slow and speed up is negligible near R, so stays at R and the motion should be too jerky if the centroid's speed
 is stable. 
 
-*Standoff Distance*
+_Standoff Distance_
 
 The standoff distance, R, is the distance to keep behind the centroid such that InFOV(TARGETS) = True. 
 FOV is based on altitude and tilt angle. 
 
-*Tilt Angle*
+_Tilt Angle_
 
 The tilt angle changes the dimensions of the FOV.
 This angle should be dynamically readjusted to grow or shrink the FOV. 
 The FOV should be narrow to get a better view of the TARGETS when their Formation is tighter, 
 and FOV should enlarge when the Formation is spread apart to keep in view. 
 
-*Path*
+_Path_
 
 Use the trajectories of the TARGETS and the estimated centroid speed to plan a path.
 By having such a path, QCOORD has something to follow without constant position updates from the TARGETS. 
 This should be especially useful when the TARGETS are in a 'working' phase, 
 since QCOORD will know not the just "fly off" in whatever direction it was going since last update. 
 
-*Path Smoothing*
+_Path Smoothing_
 
 Since their may be discrepancies between the predicted path and the observed centroid positions, 
 could use something like a Kalman filter to continually refine the path based on observations. 
 We do not yet know enough about such filters to recommend the appropriate technique with certainty.
 
-*Communcation*
+_Communcation_
 
 We chose to not have QCOORD talk to the TARGETS. 
 This may sacrifice potential gains in performance, but feels most appropriate since it
@@ -124,7 +124,7 @@ Waypoints can be sent less often than positions, but should be broadcast periodi
 there is no handshaking to ensure that anyone was listening when it was sent. 
 
 
-### Overall System Overview
+### Overall System Overview:
 
 Section is a work in progress. 
 Should talk about how communication is handled, 
@@ -133,7 +133,7 @@ how separate duties such as altitude is handled by read by the algorithm.
 Should consider how the algorithm could work with other "layers",
 or how this behavior could be subsumed by other layers that do other tasks while keeping the Follow in mind. 
 
-### Testing
+### Testing:
 
 Need to describe testing strategies.
 - Environment we test in
