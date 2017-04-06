@@ -8,7 +8,10 @@ to constantly reposition itself to keep multiple surface vehicles (TARGETS) in v
 - Primary goal: keep TARGETS in camera field of view (FOV)
 - Minimize Communication: bandwidth considerations
 - Improve sensory awareness for TARGETS: promote stable imagery and attempt to look "ahead" of TARGETS
+- [Requires verification] When TARGETS are beyond maximum FOV, continually visit each subgroup
 - Address contention: keep TARGETS in view even when QCOORD asked to image other subjects. 
+
+
 
 ### Assumptions:
 
@@ -28,6 +31,17 @@ QCOORD is a quadcopter with a camera that is able to tilt, but not pan.
 It is able to listen for messages broadcast from the TARGETS, but does not send any messages to the TARGETS. 
 As a Quadcopter, QCOORD is able to hover and change speed more easily than a fixed wing. 
 Thus, its movement can be abstracted to resemble that of a surface vehicle at a given altitude. 
+
+While the primary goal is to always keep the TARGETS in FOV, there is a physical limit to
+how spread apart TARGETS and maitain constant FOV.
+In the case that the TARGETS are too dispersed for the follow behavior, 
+some other action must take place.
+Proposed solutions include: follow larger subgroup, ask for operator instructions, or switch to an
+alternative tracking mode that cyclicly visits each subgroup. 
+The follow behavior, also called core tracking algorithm, would not try to take on these
+duties, but instead produce an output flag so that another component can decide what course of action
+to take. The component could be based around predefined user parameters, select based on a rule set, 
+or make a deliberative decision. 
 
 ### Core Tracking Algorithm:
 
@@ -113,7 +127,7 @@ Since their may be discrepancies between the predicted path and the observed cen
 could use something like a Kalman filter to continually refine the path based on observations. 
 We do not yet know enough about such filters to recommend the appropriate technique with certainty.
 
-_Communcation_
+_Communication_
 
 We chose to not have QCOORD talk to the TARGETS. 
 This may sacrifice potential gains in performance, but feels most appropriate since it
@@ -133,12 +147,93 @@ how separate duties such as altitude is handled by read by the algorithm.
 Should consider how the algorithm could work with other "layers",
 or how this behavior could be subsumed by other layers that do other tasks while keeping the Follow in mind. 
 
+**Layers**
+
+The core tracking algorithm is a behavior within a larger context. 
+A number of parameters control the behavior, but the behavior should not be forced 
+to restart to use a modified parameter. In this way, the behavior can be dynamically
+be adjusted from the "outside" when another component modifies, for example, the altitude.
+
+The following information should be accessible by the algorithm:
+
+- Maximum speed - internat state
+- Minimum speed (default is 0 -> halted) - internal state
+- Altitude - internal state
+- Camera specifications for tilt range and FOV - internal state
+- Most recent position of each TARGET - via logical sensor
+- Trajectory of each TARGET - via logical sensor
+
+The last two are updated as QCOORD received messages broadcast from the TARGETS. 
+Thus, a listening component is mandatory for QCOORD. 
+Will be further described in the Communication section.
+Logical sensors are used because it should not matter to the algorithm where
+the positions and trajectories came from. 
+One could even model non-vehicles as 'TARGETS' if they are to be followed as well. 
+In this way, drowning victims could be considered stationary targets and affect the centroid path. 
+
+The algorithm itself can be divided into distinct phases:
+
+- Construct/update centroid path prediction -> set of waypoints
+- Determine standoff distance that keeps TARGETS in view
+- Send next waypoint to the Waypoint actuator
+- Adjust speed based on relation to centroid
+- Report status/diagnostic info
+- Spend some time traveling before recomputing and correction
+
+Components that "surround" the algorithm:
+
+- Selector the turns behavior on or off
+- Target selection, determine what are the TARGETS
+- Communication layer that (minimally) listens for messages from TARGETS
+- Subsuming behavior that builds off of the follow algorithm, but could perform additional maneuvers or relax constraints. 
+- [Requires Verification] Another algorithm "beside" Follow that implements visiting each subgroup, not simultaneously.  
+
+
+**Communication**
+
+QCOORD does not send any messages the TARGETS.
+It must be constantly listening for messages broadcast by the TARGETS. 
+These messages populate the values behind logical sensors that contain each 
+of the TARGETS last received position and trajectory (set of waypoints).
+
+In order to minimize network usage, two message types exist that are sent at different intervals.
+
+- Current position (more frequently)
+- Future waypoints (less frequently) -> Used to construct trajectory
+
+QCOORD does not mandate an update rate, but will not effectively keep TARGETS in view if rate is too slow. 
+A good update rate is fast enough for QCOORD to maintain a stable Follow behavior, but without being needlessly noise. 
+Ideally the TARGETS could adjust their rates depending on their speed or degree of path variability. 
+Recommended default rates will be determined through testing. 
+
+
 ### Testing:
 
-Need to describe testing strategies.
-- Environment we test in
-- That we want to find the boundaries where the follow behavior is no longer effective
-- What metrics we will measure
+Testing will be performed to gauge whether the system is effective in keeping the TARGETS in view for a number of scenarios. 
+Some test cases will be focused on approximating realistic use cases, but others will be to find limitations. 
+
+**Environment**
+
+The "class project" phase will be tested entirely in simulation. 
+The Morse simulator was chosen for its ease of setting up diverse robots with custom sensors and actuators. 
+A 3D blender world is used to view the actions of the robots in 3D space, which makes it easy to visualize exactly what 
+the robots are going to do. 
+
+**Metrics**
+
+The metrics will be measured using a variety of parameters (altitude, max & min speed, etc)
+and using a variety of scenarios (number of TARGETS, their spread, speeds, trajectories, etc)
+
+- How much time are the TARGETS actually in FOV? - MAX
+- How much bandwidth is being used? - MIN
+- How "Jerky" is QCOORD's path - MIN
+- How far apart can TARGETS be and still support Following? MAX
+- How stable is camera imagery? MAX
+
+
+
+
+
 
 
 
