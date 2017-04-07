@@ -125,7 +125,9 @@ _experimental parameters_
 - USV paths
 - USV spatial distribution
 - Broadcast message rate
-
+- Initial distance between USVs and UAV
+- UAV altitude
+- UAV speed range
 
 
 
