@@ -105,10 +105,10 @@ reaching its limit and choose the raise the altitude. [Should we mention the cam
 	
 ## 5. Test Plan
 
-Since in simulation, can do a large number of runs with a variety of configurations
-Particularly interested in the boundaries. When are USVs too far apart to keep all in view, simultaneous.
+Since in simulation, can do a large number of runs with a variety of configurations and we are
+particularly interested in the boundaries. When are USVs too far apart to keep all in view, simultaneously?
 When should a "Visit-USVs" behavior be more appropriate? Also, what is the minimum broadcast rate support 
-effective UAV Following. 
+effective UAV Following? 
 
 _metrics_
 
