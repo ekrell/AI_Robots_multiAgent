@@ -36,7 +36,10 @@ a steady standoff distance. The speed adjustment is done through a simple piecew
 the UAV is within the distance and increases the speed when the outside, up to some maximum speed. Near the standoff distance, the
 speed adjustment is infantesimal for maintaining an equillibrium speed. 
 
-[Put the formula here]
+		UAV.SPEED = [ (TARGET_DIST - CURRENT_DIST) / (TARGET_DIST) ] (UAV.SPEED)    if CURRENT_DIST < TARGET_DIST
+		UAV.SPEED = UAV.SPEED                                                       if CURRENT_DIST == TARGET_DIST
+		UAV.SPEED = [ (TARGET_DIST + CURRENT_DIST) / (TARGET_DIST) ] (UAV.SPEED)    if CURRENT_DIST > TARGET_DIST
+
 
 By making use of USV trajectories, the UAV will be able to plan ahead for smoother behavior. 
 For example, if the USVs reach their destination and begin tending to victims, the UAV will be expecting this
