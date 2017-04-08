@@ -12,16 +12,16 @@ The project will be implemented as a script for a ground control station (GCS) s
 ### 1.2 Implementation Overview.
 
 The project is focused around a core Follow_USVs behavior that keeps the USVs in view by following the centroid of the USVs,
-but contanstly adjusting the standoff distance and camera tilt to keep the entire group in camera view. The algorithm makes the
-assumption that the USVs are traveling and working as a group and thus are close enough to each other that "following" the group is feasable. 
-Widely dispered USVs would be better monitored by a behavior that cyclicly visits each subgroup, as demonstrated in [--]. Ideally, such a 
+but contently adjusting the standoff distance and camera tilt to keep the entire group in camera view. The algorithm makes the
+assumption that the USVs are traveling and working as a group and thus are close enough to each other that "following" the group is feasible. 
+Widely dispersed USVs would be better monitored by a behavior that cyclically visits each subgroup, as demonstrated in [--]. Ideally, such a 
 behavior could be selected instead when appropriate. 
 The algorithm is not building off a single existing system, but rather takes inspiration from three main sources. 
 
 The Follow_USVs behavior is based around predicting and following the path of the USV group's centroid.
 The concept of focusing on the centroid was described in [--]. 
 The UAV is listening for periodic updates of position and trajectory (waypoints) that are broadcast by the USVs. 
-This information can be used to model the speed of the centroid and construct a set of waypoints that corrospond to the 
+This information can be used to model the speed of the centroid and construct a set of waypoints that corresponds to the 
 centroid's predicted trajectory. By following this path, the UAV's camera captures ahead of the overall group direction.
 This can help first responders see where the USVs are going and help better guide them. 
 
@@ -34,7 +34,7 @@ overall speed of targets, target spread and error margins.
 The actual task of following the centroid is performed by setting waypoints and adjusting the speed of the UAV to maintain
 a steady standoff distance. The speed adjustment is done through a simple piecewise function that slows the UAV with greater magnitude as
 the UAV is within the distance and increases the speed when the outside, up to some maximum speed. Near the standoff distance, the
-speed adjustment is infantesimal for maintaining an equillibrium speed. 
+speed adjustment is infinitesimal for maintaining an equilibrium speed. 
 
 		UAV.SPEED = [ (TARGET_DIST - CURRENT_DIST) / (TARGET_DIST) ] (UAV.SPEED)    if CURRENT_DIST < TARGET_DIST
 		UAV.SPEED = UAV.SPEED                                                       if CURRENT_DIST == TARGET_DIST
@@ -48,21 +48,21 @@ The UAV should slow down and halt, while keeping the USVs in view. To deal with 
 an extended Kalman filter should be applied to construct a more accurate prediction over time. 
 
 The ability to plan ahead also impacts the amount of network communication required for stable operation. 
-In order to keep bandwidth usage low, it was decidedthat the UAV should not send messages to the USVs. 
+In order to keep bandwidth usage low, it was decided that the UAV should not send messages to the USVs. 
 While two-way communication could potentially aid path planning, 
-this approach makes less system requirments (portability) while reducing the network traffic. Waypoints should be sent
-less often than postion updates, but still require periodic retransmission since no handshaking ensures that 
+this approach makes less system requirements (portability) while reducing the network traffic. Waypoints should be sent
+less often than position updates, but still require periodic retransmission since no handshaking ensures that 
 anything was listening when the waypoint was initially announced.
 
-In order to not interefere with other possible constraints such as FAA regulations or less variables impacting the imagery, 
-Follow_USVs does not modify the UAV altitude. However, other systems could be in place to alter the alitude based on flags output by
+In order to not interfere with other possible constraints such as FAA regulations or less variables impacting the imagery, 
+Follow_USVs does not modify the UAV altitude. However, other systems could be in place to alter the altitude based on flags output by
 Follow_USVs. 
 
 ### 1.3 Programming Language.
 
 The Python language was chosen because it is well suited for working with the Morse simulator and it supported in 
-Mission Planner GCS. Morse is very flexable simulation environment that is rendered in a 3D Blender world.
-Prototyping is well supported as the Morse system allows the creationg of customized robots by selecting a base platform and
+Mission Planner GCS. Morse is very flexible simulation environment that is rendered in a 3D Blender world.
+Prototyping is well supported as the Morse system allows the creating of customized robots by selecting a base platform and
 adding sensors and actuators such as "RGB Camera", "Pose", and "Waypoint". Aqueous environments are not readily available, but 
 UGVs are being used as a suitable analogue. 
 
@@ -81,8 +81,8 @@ Same as for development.
 ## 2. Inputs
 
 The algorithm depends on certain states and parameters of the UAV as well as periodic updates on the positions and trajectories of the USVs. 
-It is expected that the UAV's current position, altitude, and speed are accessable through Mission Planner. In simulation, these fields are 
-provided through the Morse environment. The minimum and maximum speeds are parameters to the algorithm. They should be able to be explicelty
+It is expected that the UAV's current position, altitude, and speed are accessible through Mission Planner. In simulation, these fields are 
+provided through the Morse environment. The minimum and maximum speeds are parameters to the algorithm. They should be able to be explicitly
 input by the user (or another system component) so that the robot's actual limits can be restricted. When simulating the messages broadcast from
 the USVs, delays will be programmed even though the UAV could "cheat" and check the values directly.
 
