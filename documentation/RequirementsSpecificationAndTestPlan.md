@@ -12,7 +12,7 @@ The target robot system that is a group of EMILYs (USVs) and a DJi Phantom (UAV)
 but with easy transfer to hardware in mind. In the future, it could either be implemented as a script for a ground control station (GCS), 
 such as Mission Planner, or in a companion computer directly attached to a UAV.  
 
-### 1.[1] Implementation Overview.
+### 1.1 Implementation Overview.
 
 The project is focused around a core Follow_USVs behavior that keeps the USVs in view by following the centroid of the USVs,
 but periodically adjusting the standoff distance and camera tilt to keep the entire group in camera view. The algorithm makes the
@@ -87,7 +87,7 @@ The Morse simulator and Python3 are required in order to execute the simulation.
 The hardware port could be done in a number of ways, but at minimum would require multiple (smart) EMILYs and a DJi Phantom. 
 Technically, a single EMILY could be used it simply would not demonstrate the full extent of the algorithm. 
 
-## [1]. Inputs
+## 1. Inputs
 
 The algorithm depends on certain states and parameters of the UAV as well as periodic updates on the positions and trajectories of the target USVs. 
 It is expected that the UAV's current position, altitude, and speed are accessible.
@@ -110,7 +110,7 @@ subsumption architecture where other system components modify, for example, the 
 targets in view. 
 While not an output of the algorithm itself, the project is centered around the transmission of imagery from the onboard camera. 
 
-### 3.[1] Interfaces and Mockups
+### 3.1 Interfaces and Mockups
 
 !!!!!!! Need to put something here
 
@@ -146,7 +146,7 @@ A constant starting location will be set as the "base", as if this is the ship o
 Each run has a specific USV message broadcast rate for the current position and trajectory messages.
 The UGVs will be initialized from this location, but 3 meters apart from each other and the base.
 Each UGV will loaded with a set of waypoints. Each set will conclude with a waypoint to the "home" position for pickup. 
-The waypoints will be selected to be within [1]00 yards from the base, based on the expected maximum distance between base and victims. 
+The waypoints will be selected to be within 200 yards from the base, based on the expected maximum distance between base and victims. 
 Also, the UGVs are assumed to be working as a group and staying close enough to each other to be within the camera's maximum FOV.
 The waypoints will be assigned such that the UGVs do not leave the maximum camera footprint, given the constant altitude. 
 The UGVs are sent off and then the UAV. 
@@ -170,8 +170,8 @@ visual tracking.
 
 ## 6. References
 
-[1] He, Z., Xu, J. X., Yang, S., Ren, Q., & Deng, X. ([1]014, June). On trackability of a moving target by fixed-wing UAV using geometric approach. In Industrial Electronics (ISIE), [1]014 IEEE [1]3rd International Symposium on (pp. 157[1]-1577). IEEE.
+[1] He, Z., Xu, J. X., Yang, S., Ren, Q., & Deng, X. (2014, June). On trackability of a moving target by fixed-wing UAV using geometric approach. In Industrial Electronics (ISIE), 2014 IEEE 13rd International Symposium on (pp. 1571-1577). IEEE.
 
-[2] Xiao, X., Dufek, J., Woodbury, T., & Murphy, R. ([1]017). UAV Assisted USV Visual Navigation for Marine Mass Casualty Incident Response. International Conference on Intelligent Robots and Systems. 
+[2] Xiao, X., Dufek, J., Woodbury, T., & Murphy, R. (2017). UAV Assisted USV Visual Navigation for Marine Mass Casualty Incident Response. International Conference on Intelligent Robots and Systems. 
 
 
