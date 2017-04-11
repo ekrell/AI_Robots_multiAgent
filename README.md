@@ -70,18 +70,20 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 		brew install Caskroom/cask/blender
 		
 	b. Create reference to blender by adding i. to your profile such as in ii.
-		i. MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender
+		
+		MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender
 			
-			sudo nano /etc/bashrc
-	c. Append the following string to bashrc file "export MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender"
+		sudo nano /etc/bashrc
 
+	c. Append the following string to bashrc file 
+	
+		export MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender
 
 4. Install Python 3  (At the time of this writeup the proper version of python to use is python 3.5.2 and brew does not have any old versions on tap so you download and install manually which is trivial)
 	a. Download and install Python3 @ https://www.python.org/downloads/release/python-352/
 	b. You may want to check and verify your python version by executing the following in terminal
 		
 		echo 'import sys; print("VERSION %s" % sys.version.split()[0]); sys.exit(0)' > /tmp/version.py ${MORSE_BLENDER} -y -P /tmp/version.py 2>&1 | grep VERSION
-
 
 5. Install pymorse
 	Execute in terminal
