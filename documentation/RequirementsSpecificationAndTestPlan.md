@@ -104,11 +104,14 @@ though the UAV could "cheat" and check the values straight from the simulator en
 
 ### 3.1 Outputs. 
 
-Follow_USVs should periodically the system state, such as the current UAV waypoint, standoff distance, predicted centroid trajectory,
+Follow_USVs should periodically report the system state, such as the current UAV waypoint, standoff distance, predicted centroid trajectory,
 and which targets are in the camera field of view. The UAV's speed, heading, and camera angle could be used to support a 
 subsumption architecture where other system components modify, for example, the standoff distance to get additional environment
 targets in view. 
 While not an output of the algorithm itself, the project is centered around the transmission of imagery from the onboard camera. 
+Each periodic report should have the same fields, even if those fields have not changed since last time. 
+This allows for converting each message to a row in CSV file that can be used to perform diagnostic analysis in the plotting 
+environment of the user's choice such as Excel or R. 
 
 ### 3.1 Interfaces and Mockups.
 
@@ -118,7 +121,7 @@ While not an output of the algorithm itself, the project is centered around the 
 
 This project is to develop an algorithm that would be a component of a system.
 Rather than show the entire mission planning interface, this mockup shows a few specific aspects of an interface that
-would be relevant the project. 
+would be relevant the project.
 
 **Figure A:**
 Because Follow_USVs predicts the path of the USV group's centroid, that path can be displayed as a set of 
