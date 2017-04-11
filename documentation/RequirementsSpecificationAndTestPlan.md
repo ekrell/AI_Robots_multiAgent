@@ -34,7 +34,7 @@ This can help first responders see where the USVs are going and help better guid
 
 Determining the standoff distance from the centroid is critical to keeping the USVs in view and promoting quality imagery. 
 When the USVs are close together, the standoff distance can be reduced and the UAV can capture closer imagery and a less distorted perspective. 
-However, when the USVs are further apart, the distance must increase and the camera tilt upward to maintain coverage.
+However, when the USVs are further apart, the distance must increase and the camera tilt upward to keep USVs in view.
 This component of the algorithm will borrow from [1], which demonstrated choosing an appropriate distance based on sensor angle,
 overall speed of targets, target spread and error margins.  
 The predicted path can also reduce the amount of UAV movements in order to reduce the energy consumption. 
@@ -87,7 +87,7 @@ The Morse simulator and Python3 are required in order to execute the simulation.
 The hardware port could be done in a number of ways, but at minimum would require multiple (smart) EMILYs and a DJi Phantom. 
 Technically, a single EMILY could be used it simply would not demonstrate the full extent of the algorithm. 
 
-## 1. Inputs
+## 1. Inputs.
 
 The algorithm depends on certain states and parameters of the UAV as well as periodic updates on the positions and trajectories of the target USVs. 
 It is expected that the UAV's current position, altitude, and speed are accessible.
@@ -100,7 +100,7 @@ input by the user (or another system component) so that the robot's actual limit
 When simulating the messages broadcast from the USVs, periodic transmissions will be enforced even
 though the UAV could "cheat" and check the values straight from the simulator environment. 
 
-## 3. Outputs
+## 3. Outputs.
 
 ### 3.1 Outputs. 
 
@@ -110,11 +110,11 @@ subsumption architecture where other system components modify, for example, the 
 targets in view. 
 While not an output of the algorithm itself, the project is centered around the transmission of imagery from the onboard camera. 
 
-### 3.1 Interfaces and Mockups
+### 3.1 Interfaces and Mockups.
 
 !!!!!!! Need to put something here
 
-## 4. Use case(s)
+## 4. Use case(s).
 
 The capsized vessel has come into view and number of people can be seen struggling to hold onto its rapidly sinking hull. 
 Others are nearby on floating cargo and other structures. The first responders on board are able to deploy the EMILYs, but
@@ -129,12 +129,12 @@ to maintain them in the field of view. The first responders can watch the EMILYs
 behind and looking ahead, they have a much better sense of the disaster scenario. Better informed, the team selects new waypoints to 
 aid those most in dire need of assistance. All the while, the quadcopter provides a view with clear depth perception and no significant occlusions. 
 
-## 5. Test Plan
+## 5. Test Plan.
 
 The goal is to determine if the quadcopter will be able to constantly keep a group of USVs within camera
 view by following the group through repositioning and camera tilting, using position and trajectory messages broadcast by the USVs. 
-The hypothesis is that the trajectory messages will allow the UAV to make effective path predictions that maintain 
-camera coverage using less movements than if only current positions were communicated. Using less movements is important because
+The hypothesis is that the trajectory messages will allow the UAV to make effective path predictions that keep the 
+UGVs in view using less movements than if only current positions were communicated. Using less movements is important because
 it conserves energy and thus increases the available flight time. Also, less movements would result in a stabler image which 
 reduces the disorienting effect of a shakey image, and potential image processing applications would benefit from the improved image quality. 
 
@@ -145,30 +145,48 @@ Both robot types will have a Pose sensor for localization, and the quadcopter wi
 A constant starting location will be set as the "base", as if this is the ship or shore from which the USVs are deployed. 
 Each run has a specific USV message broadcast rate for the current position and trajectory messages.
 The UGVs will be initialized from this location, but 3 meters apart from each other and the base.
-Each UGV will loaded with a set of waypoints. Each set will conclude with a waypoint to the "home" position for pickup. 
+Each UGV will loaded with a set of waypoints which represent its trajectory.. 
 The waypoints will be selected to be within 200 yards from the base, based on the expected maximum distance between base and victims. 
 Also, the UGVs are assumed to be working as a group and staying close enough to each other to be within the camera's maximum FOV.
 The waypoints will be assigned such that the UGVs do not leave the maximum camera footprint, given the constant altitude. 
 The UGVs are sent off and then the UAV. 
-The experiment will run until all vehicles have returned within 3 meter of the base for pickup or until the mission 
+The experiment will run until all vehicles have reached their final waypoint or until the mission 
 duration has gone overtime by 5% of the expected mission duration.
 Expected mission duration is calculated based on considering the total distance from each waypoint and the USV speeds.
 
 The dependent variables of interest are the percentage of total time that all the USVs are kept in view 
 and the amount of time that the UAV spends adjusting its position. 
 The main independent variables are the position and trajectory message broadcast rates which relate to the hypotheses. 
-Other independent variables are the start positions, number of USVs, their trajectories and speeds in order to avoid a scenario that happens to be biased in some way.
+Other independent variables are the number of UGVs, their trajectories and speeds. 
 To get meaningful results despite several independent variables, runs consist of two levels for combinatorial experiments. 
-At level one, the "scenario" is set, which varies the waypoints, speeds, starting locations and group size. 
+At level one, the "scenario" is set, which varies the waypoints, speeds, and group size. 
 For each "scenario" a common set of message broadcast rates are tested. 
+
+**Dependent Variables:**
+
+- time that all UGVs are kept in view
+- time spent moving UAV
+
+**Independent Variables:** 
+
+- Rate at which UGVs broadcast position
+- Rate at which UGVs broadcast trajectory (to account for trajectory modifications)
+- Number of USGs
+- UGV trajectories
+- UGV speeds
+
+**Constants:**
+
+- Base location
+- UAV altitude
 
 This experimental setup should demonstrate the effect of varying the message update rates.
 In order to compare the effect of trajectory information to using only UAV positions, one run will be performed for each scenario
 in which no trajectory information is sent. In addition to comparing against a position-only broadcast system, it models a "best case" of
-visual tracking. 
+visual tracking in which no trajectory information is sent. In addition to comparing against a position-only broadcast system, it compares against the "best case" of visual tracking if the update rate is comparable to the identification rate. 
+Within each scenario, statistical significance of mean time spent moving UAV while varying the broadcast rates would be obtained using a paired T test. The same would be done to test sigificance of time that all USVs are kept in view. 
 
-
-## 6. References
+## 6. References.
 
 [1] He, Z., Xu, J. X., Yang, S., Ren, Q., & Deng, X. (2014, June). On trackability of a moving target by fixed-wing UAV using geometric approach. In Industrial Electronics (ISIE), 2014 IEEE 13rd International Symposium on (pp. 1571-1577). IEEE.
 
