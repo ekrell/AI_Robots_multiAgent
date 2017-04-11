@@ -220,4 +220,10 @@ Within each scenario, statistical significance of mean time spent moving UAV whi
 
 [2] Xiao, X., Dufek, J., Woodbury, T., & Murphy, R. (2017). UAV Assisted USV Visual Navigation for Marine Mass Casualty Incident Response. International Conference on Intelligent Robots and Systems. 
 
+**Image Sources**
 
+- Quadcopter symbol used in mockup: https://thenounproject.com/term/quadcopter/22061/
+- Waypoint symbol used in mockup: https://waypointbhs.com/
+- Background of fake UAV camera imagery: http://www.redbull.com/en/adventure/stories/1331670732010/15-incredible-shots-of-action-and-adventure-with-a-drone-cam
+- EMILY robots placed into the fake UAV camera imagery: http://emilyrobot.com/product-category/accessories/
+- Map used for "Mission Planner" view: https://maps.google.com/
