@@ -5,8 +5,9 @@
 Users of unmanned surface vehicles (USVs), such as first responders in a marine mass casualty search and rescue scenario, 
 can better take advantage of the robots with an overhead view. As the USVs increase distance from the operators, 
 the depth perception makes it difficult to discern the situation. 
-It has been demonstrated in [2] that a quadcopter Unmanned Aerial Vehicle (UAV) visually tracking the 
-USVs can provide an effective elevation for improved decision making and situation awareness. This project aims to demonstrate that
+It has been demonstrated in [2] that a quadcopter Unmanned Aerial Vehicle (UAV) positioned to keep the USVs in camera view
+can provide an effective elevated view for improved decision making and situation awareness. 
+This project aims to demonstrate that
 using communication, rather than image processing, can support path prediction to better keep the targets in the field of view. 
 The target robot system that is a group of EMILYs (USVs) and a DJi Phantom (UAV). The project will be demonstrated in the Morse simulator, 
 but with easy transfer to hardware in mind. In the future, it could either be implemented as a script for a ground control station (GCS), 
@@ -19,8 +20,9 @@ but periodically adjusting the standoff distance and camera tilt to keep the ent
 assumption that the USVs are traveling and working as a group and thus are close enough to each other that "following" the group is feasible. 
 Widely dispersed USVs would be better monitored by a behavior that cyclically visits each subgroup. 
 Follow_USVs would be a good fit for a system where a specific tracking behavior is selected depending on mission characteristics and
-spread of the USVs. Rather than extend a single existing algorithm, Follow_USVs takes inspiration from three main sources. 
-The motivating scenario is described in [2], but the proposed approach differs by tracking using communication rather than image processing. 
+spread of the USVs. Rather than extend a single existing algorithm, Follow_USVs takes inspiration from two sources. 
+The motivating scenario is described in [2], where a UAV-UGVs team aided human operators with an overheard view of the USVs. 
+However, in [2] the UAV went directly to a target location where the USVs are programmed to end up. In this project, the UAV autonomously repositions to keep USVs in view. 
 In [1], a UAV followed the group of surface vehicles by predicting the path of the group's centroid and calculating a standoff distance 
 that allowed constant sensor coverage of the targets. However, the UAV was a fixed-wing and is subject to movement constraints that
 do not apply to the quadcopter. The concepts of centroid path modeling and standoff distance selecting is to be adapted for
