@@ -183,7 +183,8 @@ For each "scenario" a common set of message broadcast rates are tested.
 This experimental setup should demonstrate the effect of varying the message update rates.
 In order to compare the effect of trajectory information to using only UAV positions, one run will be performed for each scenario
 in which no trajectory information is sent. In addition to comparing against a position-only broadcast system, it models a "best case" of
-visual tracking. Within each scenario, statistical significance of mean time spent moving UAV while varying the broadcast rates would be obtained using a paired T test. The same would be done to test sigificance of time that all USVs are kept in view. 
+visual tracking in which no trajectory information is sent. In addition to comparing against a position-only broadcast system, it compares against the "best case" of visual tracking if the update rate is comparable to the identification rate. 
+Within each scenario, statistical significance of mean time spent moving UAV while varying the broadcast rates would be obtained using a paired T test. The same would be done to test sigificance of time that all USVs are kept in view. 
 
 ## 6. References.
 
