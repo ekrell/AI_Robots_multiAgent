@@ -116,6 +116,25 @@ While not an output of the algorithm itself, the project is centered around the 
 
 [Mockup]: https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/mockup.png "Interface Design"
 
+This project is to develop an algorithm that would be a component of a system.
+Rather than show the entire mission planning interface, this mockup shows a few specific aspects of an interface that
+would be relevant the project. 
+
+**Figure A:**
+Because Follow_USVs predicts the path of the USV group's centroid, that path can be displayed as a set of 
+waypoint which can be displayed on a map. This easily communicates to the users what the quadcopter is 
+"thinking"; the operators can visually inspect if the path is reasonable. 
+
+**Figure B:**
+Deployment of the quadcopter should be very fast. The operators should be able to enable and disable the tracking
+which a single click and have a corresponding visual indicator. The list of targets is color coded to easily see what
+targets are in view (blue), not in view (red) and which are not being tracked (grey). 
+An operator may have a specific reason for a USV to leave the the group, and can click its name to toggle between 
+tracking and not tracking that target. An untracked target is not considered when calculating the group centroid
+and generating a path prediction. 
+
+**Figure C:**
+The streaming imagery from the quadcopter camera. The goal of this project is that the USVs will always be in view. 
 
 
 ## 4. Use case(s).
