@@ -112,7 +112,12 @@ While not an output of the algorithm itself, the project is centered around the 
 
 ### 3.1 Interfaces and Mockups.
 
-!!!!!!! Need to put something here
+Reference-style: 
+![Interface Design Mockup][Mockup]
+
+[Mockup]: https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/mockup.png "Interface Design"
+
+
 
 ## 4. Use case(s).
 
