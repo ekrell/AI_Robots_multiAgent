@@ -55,37 +55,38 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 
 ### MacOS Setup- Simulation
 
-	0. Update everything including xCode from the App Store and install Command Line Utilities
+0. Update everything including xCode from the App Store and install Command Line Utilities
 		
 		Https://itunes.apple.com/app/xcode/id497799835?mt=12
 
-	1. Install brew package manager
-		Execute In terminal	'/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+1. Install brew package manager
+	Execute In terminal	
+	'/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
 
-	3. Install Blender
-		
+3. Install Blender	
+	a. Execute in terminal
 		brew install Caskroom/cask/blender
 		
-		a. Create reference to blender by adding i. to your profile such as in ii.
+	b. Create reference to blender by adding i. to your profile such as in ii.
 		i. MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender
 			sudo nano /etc/bashrc
-		b. Append the following string to bashrc file "export MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender"
-	4. Install Python 3  (At the time of this writeup the proper version of python to use is python 3.5.2 and brew does not have any old versions on tap so you download and install manually which is trivial)
-		a. Download and install Python3 @ https://www.python.org/downloads/release/python-352/
-		b. You may want to check and verify your python version by executing the following in terminal
+	c. Append the following string to bashrc file "export MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender"
+4. Install Python 3  (At the time of this writeup the proper version of python to use is python 3.5.2 and brew does not have any old versions on tap so you download and install manually which is trivial)
+	a. Download and install Python3 @ https://www.python.org/downloads/release/python-352/
+	b. You may want to check and verify your python version by executing the following in terminal
+		echo 'import sys; print("VERSION %s" % sys.version.split()[0]); sys.exit(0)' > /tmp/version.py ${MORSE_BLENDER} -y -P /tmp/version.py 2>&1 | grep VERSION
+5. Install pymorse
+	a. Execute in terminal
+		pip3 install pymorse
 
-			echo 'import sys; print("VERSION %s" % sys.version.split()[0]); sys.exit(0)' > /tmp/version.py ${MORSE_BLENDER} -y -P /tmp/version.py 2>&1 | grep VERSION
-	5. Install pymorse
-		a. Execute from terminal
-			
-			"pip3 install pymorse"
-
-	6. Install cmake dependency "pkg-config"
-	 Execute in terminal		Brew install pkg-config"
+6. Install cmake dependency "pkg-config"
+	 Execute in terminal		
+		Brew install pkg-config"
 	
-	7. Install Morse Simulator
-	 In terminal Execute	brew tap morse-simulator/morse; brew install morse-simulator;
-	8) Sources
-		a. https://www.openrobots.org/morse/doc/stable/user/installation/package_manager/homebrew_osx.html
-  		b. https://github.com/morse-simulator/homebrew-morse
-		c. https://github.com/caskroom/homebrew-cask/blob/master/Casks/blender.rb
+7. Install Morse Simulator
+	 In terminal Execute	
+		brew tap morse-simulator/morse; brew install morse-simulator;
+8) Sources
+	a. https://www.openrobots.org/morse/doc/stable/user/installation/package_manager/homebrew_osx.html
+	b. https://github.com/morse-simulator/homebrew-morse
+	c. https://github.com/caskroom/homebrew-cask/blob/master/Casks/blender.rb
