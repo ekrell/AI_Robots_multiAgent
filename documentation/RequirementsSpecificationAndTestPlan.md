@@ -9,7 +9,7 @@ It has been demonstrated in [2] that a quadcopter Unmanned Aerial Vehicle (UAV) 
 can provide an effective elevated view for improved decision making and situation awareness. 
 This project aims to demonstrate that
 using communication, rather than image processing, can support path prediction to better keep the targets in the field of view. 
-The target robot system that is a group of EMILYs (USVs) and a DJi Phantom (UAV). The project will be demonstrated in the Morse simulator, 
+The target robot system that is a group of EMILYs (USVs) and a DJI Phantom (UAV). The project will be demonstrated in the Morse simulator, 
 but with easy transfer to hardware in mind. In the future, it could either be implemented as a script for a ground control station (GCS), 
 such as Mission Planner, or in a companion computer directly attached to a UAV.  
 
@@ -26,7 +26,7 @@ However, in [2] the UAV went directly to a target location where the USVs are pr
 In [1], a UAV followed the group of surface vehicles by predicting the path of the group's centroid and calculating a standoff distance 
 that allowed constant sensor coverage of the targets. However, the UAV was a fixed-wing and is subject to movement constraints that
 do not apply to the quadcopter. The concepts of centroid path modeling and standoff distance selecting is to be adapted for
-an algorithm that takes advantage of a quadcopters manueverability freedom. 
+an algorithm that takes advantage of a quadcopters maneuverability freedom. 
 
 The Follow_USVs behavior is based around predicting and following the path of the USV group's centroid.
 The UAV is listening for periodic updates of position and trajectory (waypoints) that are broadcast by the USVs. 
@@ -42,7 +42,7 @@ overall speed of targets, target spread and error margins.
 The predicted path can also reduce the amount of UAV movements in order to reduce the energy consumption. 
 Instead of constantly repositioning the UAV based on the current state of the USVs, the UAV can 
 select a position that is expected to keep the USVs in view for some duration. 
-While the UAV is in position, it can continue to track the USVs by tilting and zooming the camera while adjusing vehicle yaw.
+While the UAV is in position, it can continue to track the USVs by tilting and zooming the camera while adjusting vehicle yaw.
 
 The actual task of following the centroid is performed by setting waypoints and adjusting the speed of the UAV using a simple potential field approach
 to maintain a target standoff distance. If the UAV's distance from the centroid is less than the target standoff distance, then the UAV reverses
@@ -85,8 +85,8 @@ The required development tools are the Morse simulator, python3 and Git for vers
 
 #### 1.4.1 Equipment for Execution.
 
-The Morse simulator and Python3 are required in order to execute the simulation. 
-The hardware port could be done in a number of ways, but at minimum would require multiple (smart) EMILYs and a DJi Phantom. 
+The Morse simulator and python3 are required in order to execute the simulation. 
+The hardware port could be done in a number of ways, but at minimum would require multiple (smart) EMILYs and a DJI Phantom. 
 Technically, a single EMILY could be used it simply would not demonstrate the full extent of the algorithm. 
 
 ## 1. Inputs.
