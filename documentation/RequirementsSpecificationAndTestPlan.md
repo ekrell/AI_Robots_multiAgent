@@ -117,9 +117,11 @@ environment of the user's choice such as Excel or R.
 
 ### 3.1 Interfaces and Mockups.
 
-![Interface Design Mockup][Mockup]
+![Interface Design][Interface]
 
 [Interface]: https://github.com/ekrell/AI_Robots_multiAgent/blob/master/documentation/Diagnostic%20Interface.png "Diagnostic Interface"
+
+![Interface Design Mockup][Mockup]
 
 [Mockup]: https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/mockup.png "Interface Design"
 
