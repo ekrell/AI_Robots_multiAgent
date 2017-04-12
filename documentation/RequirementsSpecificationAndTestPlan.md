@@ -16,7 +16,7 @@ such as Mission Planner, or in a companion computer directly attached to a UAV.
 ### 1.1 Implementation Overview.
 
 The project is focused around a core Follow_USVs behavior that keeps the USVs in view by following the centroid of the USVs,
-but periodically adjusting the standoff distance and camera tilt to keep the entire group in camera view. The algorithm makes the
+but periodically adjusting the standoff distance, vehicle yaw, camera tilt and camera zoom to keep the entire group in camera view. The algorithm makes the
 assumption that the USVs are traveling and working as a group and thus are close enough to each other that "following" the group is feasible. 
 Widely dispersed USVs would be better monitored by a behavior that cyclically visits each subgroup. 
 Follow_USVs would be a good fit for a system where a specific tracking behavior is selected depending on mission characteristics and
@@ -42,7 +42,7 @@ overall speed of targets, target spread and error margins.
 The predicted path can also reduce the amount of UAV movements in order to reduce the energy consumption. 
 Instead of constantly repositioning the UAV based on the current state of the USVs, the UAV can 
 select a position that is expected to keep the USVs in view for some duration. 
-While the UAV is in position, it can continue to track the USVs by tilting the camera. 
+While the UAV is in position, it can continue to track the USVs by tilting and zooming the camera while adjusing vehicle yaw.
 
 The actual task of following the centroid is performed by setting waypoints and adjusting the speed of the UAV using a simple potential field approach
 to maintain a target standoff distance. If the UAV's distance from the centroid is less than the target standoff distance, then the UAV reverses
@@ -144,6 +144,8 @@ The streaming imagery from the quadcopter camera. The goal of this project is th
 
 ## 4. Use case(s).
 
+**Scenario: Marine mass casualty**
+
 The capsized vessel has come into view and number of people can be seen struggling to hold onto its rapidly sinking hull. 
 Others are nearby on floating cargo and other structures. The first responders on board are able to deploy the EMILYs, but
 are far enough that their view is at a low angle. Also, some parts of the disaster scene are occluded by the floating structures. 
@@ -157,10 +159,44 @@ to maintain them in the field of view. The first responders can watch the EMILYs
 behind and looking ahead, they have a much better sense of the disaster scenario. Better informed, the team selects new waypoints to 
 aid those most in dire need of assistance. All the while, the quadcopter provides a view with clear depth perception and no significant occlusions. 
 
+**Consideration:** Energy efficiency 
+
+In order to extend the possible flight time of the UAV, an important goal is to conserve the USV's battery through strategic positioning.
+Instead of constantly "tail-chasing" the group of USVs through frequent repositioning, the UAV hovers at a position where it predicts
+the USVs will be in view for some duration. Once in position, it maintains the USVs in view by tilting and zooming the camera, as well as turning the
+UAV. When the USVs are positioned more densely, the camera zooms in for a better view. Meanwhile, the camera tilt and UAV yaw follow the estimated 
+centroid position.
+
+**Exception: lost/delayed updates**
+
+While undergoing a mission such as in Scenario A, one of the EMILYs is damaged and unable to broadcast. 
+Using the periodic status updates, the UAV is able to alert the operators that it has lost communication with a particular target.
+After some interval, the UAV can focus on following the USVs that it is still receiving from but still listening for the lost USV
+unless the operators explicitly disable following that USV. If the USV has lost all communication with USVs, but still has communication
+with the base, then the operators will be notified and can direct the UAV accordingly. For example, they may choose to have the UAV return to base
+or control manually. 
+
+**Flexibility: Dynamic parameter adjustment**
+
+During a mission, multiple EMILYs have reached their destination and halted while victims grab hold of the floatation. 
+The UAV currently has a zoomed view of the USVs, but does not provide enough of the surrounding environment of interest. 
+The operator sends a command to enlarge the minimum field of view so that the UAV zooms out to reveal the desired scene. 
+Minimum and maximum values for the following parameters can be adjusted while in flight to get the desired view, because
+the algorithm re-checks the parameters at each cycle not just at initialization.
+
+**Contention: UAV given other tasks**
+
+The proposed algorithm is very focused on the following behavior, but is designed to support a subsumption architecture. 
+At any time, other system components such as manual intervention or additional autonomous features could override this behavior. 
+However, the path prediction is still being performed even if the outputs are intercepted and modified or discarded before reaching
+the motor components. Thus, once control is returned to the follow behavior, the UAV can easily get back on track since
+it has a next waypoint ready. Also, the subsumming components could use modify the outputs to maintain the view while performing other tasks.
+
+
 ## 5. Test Plan.
 
 The goal is to determine if the quadcopter will be able to constantly keep a group of USVs within camera
-view by following the group through repositioning and camera tilting, using position and trajectory messages broadcast by the USVs. 
+view by following the group through repositioning and camera tilting/zooming, using position and trajectory messages broadcast by the USVs. 
 The hypothesis is that the trajectory messages will allow the UAV to make effective path predictions that keep the 
 UGVs in view using less movements than if only current positions were communicated. Using less movements is important because
 it conserves energy and thus increases the available flight time. Also, less movements would result in a stabler image which 
@@ -168,7 +204,7 @@ reduces the disorienting effect of a shakey image, and potential image processin
 
 The algorithm will be tested in the Morse simulator, using a single quadcopter and variable number of ground vehicles. 
 The quadcopter will have a speed actuator and an abstract 'Waypoint' actuator. The ground vehicles will also have speed and waypoint control. 
-Both robot types will have a Pose sensor for localization, and the quadcopter will have an RGB camera with tilt control. 
+Both robot types will have a Pose sensor for localization, and the quadcopter will have an RGB camera with tilt and zoom control. 
 
 A constant starting location will be set as the "base", as if this is the ship or shore from which the USVs are deployed. 
 Each run has a specific USV message broadcast rate for the current position and trajectory messages.
