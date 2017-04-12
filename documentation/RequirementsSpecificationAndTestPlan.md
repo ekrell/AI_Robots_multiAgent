@@ -119,6 +119,8 @@ environment of the user's choice such as Excel or R.
 
 ![Interface Design Mockup][Mockup]
 
+[Interface]: https://github.com/ekrell/AI_Robots_multiAgent/blob/master/documentation/Diagnostic%20Interface.png "Diagnostic Interface"
+
 [Mockup]: https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/mockup.png "Interface Design"
 
 This project is to develop an algorithm that would be a component of a system.
