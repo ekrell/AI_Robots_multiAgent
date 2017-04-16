@@ -32,7 +32,24 @@ futures = {'E1': E1_future, 'E2': E2_future, 'E3': E3_future}
 
 # Functions
 
-def get_angle_2D(a, b):
+def updatePositions (targets):
+    # Since this is just simulation, need a way to have the next 'current position' 
+    # And remove visited Waypoints
+    # Could even have occasional Waypoint updates if desired
+    for t in targets:
+        t['position_prev'] = t['position']
+        w = t['waypoints'][0]
+        if futures[t['name']]:
+            t['position'] = futures[t['name']].pop ()
+            dist_old_way = ( (w[0] - t['position_prev'][0]) ** 2 + (w[1] - t['position_prev'][1]) ** 2 ) ** (.5)
+            dist_old_new = ( (t['position'][0] - t['position_prev'][0]) ** 2 + (t['position'][1] - t['position_prev'][1]) ** 2 ) ** (.5)
+            if (dist_old_new > dist_old_way):
+                t['waypoints'].pop(0)
+        else: # Have lost connection or other critical error
+            return False
+    return True
+
+def get_angle_2D (a, b):
 # Calculate the angle between two vectors in (R^2)
 # a - a 2D numeric array
 # b - a 2D numeric array
@@ -65,11 +82,14 @@ def calc_Speed (targets):
         t['speed'] = (((t['position'][0] - t['position_prev'][0]) ** 2 + (t['position'][1] - t['position_prev'][1]) ** 2 ) ** (.5)) / (deltaT_s)
 
 def predict_Path (targets):
+    paths = dict.fromkeys( [t['name'] for t in targets] )    
+
     for t in targets:
         # Init path list, where is every item is the next predicted point after a deltaTT interval
         waypoints = t['waypoints'].copy()
         # First predicted position is actual position
         p = t['position']
+        paths[t['name']] = [p]
         # Get next waypoint
         w = waypoints.pop(0)
         # Set source point
@@ -92,6 +112,7 @@ def predict_Path (targets):
             coords = nm.add (p, pp)
             old_p = p 
             p = (coords[0], coords[1])
+            paths[t['name']].append (p)
 
             # Need to see if waypoint reached ---> next waypoint
             dist_to_waypoint = ( (w[0] - s[0]) ** 2 + (w[1] - s[1]) ** 2 ) ** (.5)
@@ -103,6 +124,19 @@ def predict_Path (targets):
                     p = w
                 else:
                     w = None
+    return paths
+
+def calc_centroid_path (targets, paths):
+    centroid_path = []
+    lenmax = max ([len (paths[t['name']]) for t in targets])
+    for i in range (lenmax):
+        state_t = [ paths[t['name']][i] if ( len(paths[t['name']]) > i ) else ( paths[t['name']][len(paths[t['name']]) - 1] ) for t in targets ]
+        x, y = zip (*state_t)
+        l = len (x)
+        centroid = sum (x) / l, sum (y) / l
+        centroid_path.append (centroid)
+    return centroid_path
+       
 
 # Initialize Data
 
@@ -129,17 +163,16 @@ types = ['ro', 'bo', 'go']
 for t in targets:
     pl.plot(*zip(*futures[t['name']]), types[cnt])
     cnt = cnt + 1
-#pl.show()
+
 # Main loop: Path prediction
-cnt = 1
 while (predict == True):
-    print (cnt)
-    predict = get_Position (targets)
+    predict = updatePositions (targets)
     if (predict == False): # No position --> no prediction
         break
     calc_Speed (targets)
     centroid['position'] = calc_centroid (targets)
-    predict_Path (targets)
-    cnt = cnt + 1
-    
-    exit (0)
+    paths = predict_Path (targets)
+    centroid_path = calc_centroid_path (targets, paths)
+    print (centroid_path)
+    pl.plot(*zip(*centroid_path), 'p-')
+pl.show ()
