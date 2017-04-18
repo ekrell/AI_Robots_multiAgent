@@ -2,6 +2,8 @@
 import math
 import numpy as nm
 import pylab as pl
+import matplotlib.patches as mpatches
+
 
 #### Hard-coded testing data; Will actually come from inputs
 
@@ -156,13 +158,33 @@ centroid = { 'position_prev': (None, None), 'position': calc_centroid (targets),
 # Init 'predict' as true, the flag for loop continuation
 predict = True
 
-
-# Debug stuff
+####### Plot: Waypoints & initial positions
+pl.title ('Target Tracking')
 cnt = 0
-types = ['ro', 'bo', 'go']
+cols = ['r', 'b', 'g']
+labels = ['Target 1: waypoints', 'Target 2: waypoints', 'Target 3: waypoints']
 for t in targets:
-    pl.plot(*zip(*futures[t['name']]), types[cnt])
+    ways = []
+    ways.append (t['position'])
+    ways.extend (t['waypoints'])
+    pl.plot(*zip (*ways), linestyle = '--', marker = 'o', color = cols[cnt], label = labels[cnt])
     cnt = cnt + 1
+    pl.legend ()
+x1, x2, y1, y2 = pl.axis()
+pl.axis ((x1 - 2, x2 + 2, y1 - 2 , y2 + 2))
+pl.legend(loc='lower right', shadow=True)
+pl.savefig ('predict_path__waypoints.pdf')
+
+
+####### Plot: Observed target positions
+cnt = 0
+labels = ['Target 1: observed', 'Target 2: observed', 'Target 3: observed']
+for t in targets:
+    pl.plot(*zip(*futures[t['name']]), linestyle = '-', color = cols[cnt], label = labels[cnt])
+    cnt = cnt + 1
+pl.legend(loc='lower right', shadow=True)
+pl.savefig ('predict_path__observed.pdf')
+
 
 # Main loop: Path prediction
 while (predict == True):
@@ -174,5 +196,7 @@ while (predict == True):
     paths = predict_Path (targets)
     centroid_path = calc_centroid_path (targets, paths)
     print (centroid_path)
-    pl.plot(*zip(*centroid_path), 'p-')
-pl.show ()
+    ####### Plot: Current path prediction
+    pl.plot(*zip(*centroid_path), alpha = 0.7, color = 'grey')
+pl.savefig ('predict_path__predicted.pdf')
+
