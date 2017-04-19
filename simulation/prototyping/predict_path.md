@@ -3,6 +3,7 @@
 
 
 **Main:**
+```
 
 	Initialize each target's previous position to None
 
@@ -35,7 +36,7 @@
 		Call 'calcCentroidPath': Use the Paths to predict the positions of the centroid
 
 	Output the target and centroid paths
-
+```
 
 
 **predictPath:**
@@ -48,8 +49,7 @@ OUTPUTS:
 	
 - Predicted paths for each Target
 
-
-
+```
 	Initialize Paths to store each target's predicted path points
 
 	For each target:
@@ -97,7 +97,7 @@ OUTPUTS:
 				Set s as previous waypoint, which is now the source point
 			
 	Return Paths
-
+```
 
 **calcCentroidPath:**
 
@@ -110,6 +110,7 @@ OUTPUTS:
 - Predicted path of the centroid
 
 
+```
 	Initialize empty centroid path
 
 	Set lenmax as the longest target path
@@ -124,5 +125,5 @@ OUTPUTS:
 		Append this centroid position to the predicted path
 
 	Return the centroid paths
-
+```
 
