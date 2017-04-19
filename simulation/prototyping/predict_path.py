@@ -163,15 +163,16 @@ def predictPath (targets):
             # calculate interval vector: (Xvelocity * interval Time,  Yvelocity * interval_Time)
             i = (velocity[0] * deltaTT_s, velocity[1] * deltaTT_s)
 	
-            # Rotate the vector toward waypoint
-            i = list(i)
-            w = list(w)
-            p = list(p)
-            theta = get_angle_2D (i, w)
-            w = nm.subtract (i, w)
-            w_norm = nm.linalg.norm (w)
+            # Calc angle between waypoint-vector and x-axis in order to break interval vector into (x, y) components
+            theta = get_angle_2D (w, [1, 0])
+            # Calc magnitude of i
+            Mi = (i[0] ** 2 + i[1]** 2 ) ** (.5)
+ 
+            # calculate components of interval vector
+            i[0] = nm.cos (theta) * Mi
+            i[1] = nm.sin (theta) * Mi
             
-            # Add little vector to current position for next position
+            # Add interval vector to current position for next position
             coords = nm.add (p, i)
             old_p = p 
             p = (coords[0], coords[1])
