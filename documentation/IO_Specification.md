@@ -21,12 +21,12 @@ __Command Line Interface:__
 
 __Parameters:__
 
-Minimum speed
-Maximum speed
-Minimum tilt angle
-Maximum tilt angle
-Minimum zoom level
-Maximum zoom level
+- Minimum speed
+- Maximum speed
+- Minimum tilt angle
+- Maximum tilt angle
+- Minimum zoom level
+- Maximum zoom level
 
 __Outputs:__
 
