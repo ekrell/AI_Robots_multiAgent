@@ -40,6 +40,12 @@ Output the target and centroid paths
 
 **predictPath:**
 
+INPUTS:
+	Targets: Target objects
+
+OUTPUTS:
+	Predicted paths for each Target
+
 Initialize Paths to store each target's predicted path points
 
 For each target:
@@ -86,6 +92,31 @@ For each target:
 
 			Set s as previous waypoint, which is now the source point
 		
-return Paths
+Return Paths
+
+
+**calcCentroidPath:**
+
+INPUTS:
+	Paths: predicted paths for each target
+	Targets: Target objects
+
+OUTPUTS:
+	Predicted path of the centroid
+
+Initialize empty centroid path
+
+Set lenmax as the longest target path
+
+For i in range 0 to lenmax:
+
+	Set State as each target's point at the current interval. 
+	(Some targets may reach their final waypoints first, so their final points repeat as they are stationary)
+
+	Calculate the centroid position using the points
+
+	Append this centroid position to the predicted path
+
+Return the centroid paths
 
 
