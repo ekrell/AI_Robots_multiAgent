@@ -42,11 +42,12 @@
 
 INPUTS:
 
--Targets: Target objects
+- Targets: Target objects
 
 OUTPUTS:
 	
 - Predicted paths for each Target
+
 
 	Initialize Paths to store each target's predicted path points
 
@@ -106,6 +107,7 @@ INPUTS:
 
 OUTPUTS:
 - Predicted path of the centroid
+
 
 	Initialize empty centroid path
 
