@@ -13,6 +13,7 @@
 # Import libraries
 import pymorse
 import argparse
+import datetime
 import time
 
 # Import interfaces
@@ -66,7 +67,16 @@ def systems_check(robot):
 # Parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", help = "variable name of robot in MORSE simulator")
+parser.add_argument("-w", "--waypoints", help = "file containing waypoints")
 args = parser.parse_args()
+
+# Read waypoints
+if (args.waypoints is not None):
+    with open (args.waypoints) as f:
+        waypoints = f.readlines ()
+    waypoints = [x.strip () for x in waypoints]
+    waypoints = [(float (x.split(',')[0]), float (x.split(',')[1])) for x in waypoints]
+    print (waypoints)
 
 # A robot is a dictionary of info
 # Will fail if args not set => implicit argument verification
@@ -80,12 +90,23 @@ with pymorse.Morse() as simu:
 
         systems_check(robot)
         print (str(get_status(robot)))
-        goto_target(robot, {'x':-4, 'y':-3}, 1.0)
-        while (getattr(simu, robot['name']).waypoint.get_status() == "Transit"):
-            print (str(get_status(robot)))
-            time.sleep(0.5)
-        halt(robot)
-        circle_target(robot, {'x':-7, 'y':-7}, 3, 2, 2)
+        
+        if (args.waypoints):
+            for w in waypoints:
+                goto_target (robot, {'x':w[0], 'y':w[1]}, 2.0)
+                while (getattr (simu, robot['name']).waypoint.get_status() == "Transit"):
+                    print (str(get_status(robot)))
+                    time.sleep(0.5)
+                print ("Arrived!")
+                #halt(robot)
+
+        ##goto_target(robot, {'x':50, 'y':-50}, 2.0)
+        ##while (getattr(simu, robot['name']).waypoint.get_status() == "Transit"):
+        ##    print ('Timestamp: {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
+        ##    print (str(get_status(robot)))
+        ##    time.sleep(0.5)
+        ##halt(robot)
+        ##circle_target(robot, {'x':-7, 'y':-7}, 3, 2, 2)
 
     except pymorse.MorseServerError as mse:
         print('Oops! An error occured!')

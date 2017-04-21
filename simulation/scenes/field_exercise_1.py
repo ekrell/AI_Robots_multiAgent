@@ -4,12 +4,17 @@
 # Robots:
 #    DJANGO - UGV
 #       platform: ATRV
-#       sensors: { }
-#       actuators: { Keyboard }
+#       sensors: { Pose }
+#       actuators: { Keyboard, Waypoint, MotionVW }
 #    SUSAN - UGV
 #       platform: ATRV
 #       sensors: { Pose }
 #       actuators: { Waypoint, MotionVW }
+#    Anton - UGV
+#       platform: ATRV
+#       sensors: { Pose }
+#       actuators: { Waypoint, MotionVW }
+
 #    GODOT - UAV
 #       platform: quadrotor
 #       sensors: WIP
@@ -20,15 +25,29 @@ from morse.builder import *
 
 # Initialize DJANGO
 django = ATRV ()
-django.translate (x = 1.0, z = 0.2)
+django.translate (x = -55, y = 60 )
 django.properties (Object = True, Graspable = False, Label = "DJANGO")
 keyboard = Keyboard ()
-keyboard.properties (Speed = 3.0)
+keyboard.properties (Speed = 2.0)
 django.append (keyboard)
+pose_django = Pose ()
+pose_django.name = "pose"
+pose_django.translate (z = 0.83)
+pose_django.add_interface ('socket')
+django.append (pose_django)
+waypoint_django = Waypoint ()
+waypoint_django.name = "waypoint"
+django.append (waypoint_django)
+waypoint_django.add_interface ('socket')
+motion_django = MotionVW ()
+motion_django.name = "motion"
+django.append (motion_django)
+motion_django.add_interface ('socket')
+
 
 # Initialize SUSAN
 susan = ATRV ()
-susan.translate (x = 1.5, z = 0.2)
+susan.translate (x = -50, y = 55)
 susan.properties (Object = True, Graspable = False, Label = "SUSAN")
 pose_susan = Pose ()
 pose_susan.name = "pose"
@@ -43,6 +62,26 @@ motion_susan = MotionVW ()
 motion_susan.name = "motion"
 susan.append (motion_susan)
 motion_susan.add_interface ('socket')
+
+
+# Initialize ANTON
+anton = ATRV ()
+anton.translate (x = -60, y = 45)
+anton.properties (Object = True, Graspable = False, Label = "ANTON")
+pose_anton = Pose ()
+pose_anton.name = "pose"
+pose_anton.translate (z = 0.83)
+pose_anton.add_interface ('socket')
+anton.append (pose_anton)
+waypoint_anton = Waypoint ()
+waypoint_anton.name = "waypoint"
+anton.append (waypoint_anton)
+waypoint_anton.add_interface ('socket')
+motion_anton = MotionVW ()
+motion_anton.name = "motion"
+anton.append (motion_anton)
+motion_anton.add_interface ('socket')
+
 
 # Initialize GODOT
 godot = Quadrotor ()
