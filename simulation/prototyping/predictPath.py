@@ -47,17 +47,19 @@ def updatePositions (targets):
         t['position_prev'] = t['position']
    
         w = t['waypoints'][0] # Get current waypoint
-        if (len (t['observed_path']) > 1):
+        skip = 10
+        for i in range(skip):
+            if (len (t['observed_path']) > 1):
             
-            t['position'] = t['observed_path'].pop (0)
-            if (t['position'] == 'A'):
-                if (t['observed_path']):
-                    t['position'] = t['observed_path'].pop (0)
-                    t['waypoints'].pop(0)
-                else:
-                    t['position'] = t['position_prev']
-        else: # Have lost connection or other critical error
-            return False
+                t['position'] = t['observed_path'].pop (0)
+                if (t['position'] == 'A'):
+                    if (t['observed_path']):
+                        t['position'] = t['observed_path'].pop (0)
+                        t['waypoints'].pop(0)
+                    else:
+                        t['position'] = t['position_prev']
+            else: # Have lost connection or other critical error
+                return False
     return True
 
 def get_angle_2D (a, b):
@@ -70,16 +72,14 @@ def get_angle_2D (a, b):
   x = math.acos(x)
   return x
 
-def angle_between(p1, p2):
-    ang1 = nm.arctan2(*p1[::-1])
-    ang2 = nm.arctan2(*p2[::-1])
-    return nm.rad2deg((ang1 - ang2) % (2 * nm.pi))
-
-def angle_to(p1, p2, rotation=0, clockwise=False):
-    angle = nm.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0])) - rotation
-    if not clockwise:
-        angle = -angle
-    return angle
+def rotatePoint(centerPoint,point,angle):
+    """Rotates a point around another centerPoint. Angle is in degrees.
+    Rotation is counter-clockwise"""
+    angle = angle
+    temp_point = point[0]-centerPoint[0] , point[1]-centerPoint[1]
+    temp_point = ( temp_point[0]*math.cos(angle)-temp_point[1]*math.sin(angle) , temp_point[0]*math.sin(angle)+temp_point[1]*math.cos(angle))
+    temp_point = temp_point[0]+centerPoint[0] , temp_point[1]+centerPoint[1]
+    return temp_point
 
 def calcCentroid (targets):
     """
@@ -125,6 +125,8 @@ def predictPath (targets):
     # Init empty paths, where each path is accessable by target's name
     paths = dict.fromkeys( [t['name'] for t in targets] )    
     for t in targets:
+        paths['time'] = t['position'][2]  # ! Is written over each time, but matters little since all ~same time
+
         # Init path list, where is every item is the next predicted point after a deltaTT interval
         waypoints = t['waypoints'].copy()
         # First predicted position is actual position
@@ -139,43 +141,21 @@ def predictPath (targets):
         # If speed is 0, no path.. 
         if (t['speed'] != 0):
             cnt = 0 
-            while (w is not None ):# and cnt < 100): # While waypoints still exist, continue building path prediction
+            while (w is not None): # and cnt < 5000): # While waypoints still exist, continue building path prediction
                 cnt = cnt + 1
-                # Create interval vector
-                # Calc angle between position-vector and x-axis in order to break speed into (x, y) components
-                thetaPrime = nm.arctan2(p[1], p[0])
+                i = (t['speed'] * deltaTT_s, 0)
+                l = nm.subtract (p, w)
+                tt = nm.arctan2(l[1], l[0])
+                if (tt < 0):
+                    tt = tt + 2 * math.pi
+                i = rotatePoint ((0,0), i, tt) 
 
-                # Break the speed into (x, y) components
-                velocity = (nm.cos (thetaPrime) * t['speed'], nm.sin (thetaPrime) * t['speed'])
-                # calculate interval vector: (Xvelocity * interval Time,  Yvelocity * interval_Time)
-                i = (velocity[0] * deltaTT_s, velocity[1] * deltaTT_s)
-	    
-                # Calc angle between waypoint-vector and x-axis in order to break interval vector into (x, y) components
-                theta = nm.arctan2(w[1], w[0])
-                 
-                i = (t['speed'] * deltaTT_s * nm.cos (theta), t['speed'] * deltaTT_s * nm.sin (theta))
-
-
-                #theta = nm.arctan2(w[1], w[0])
-                #print ("Theta:", theta)
-                # Calc magnitude of i
-                #Mi = (i[0] ** 2 + i[1]** 2 ) ** (.5)
- 
-                # calculate components of interval vector
-                #i = [i[0], i[1]]
-                #i[0] = nm.cos (theta) * Mi
-                #i[1] = nm.sin (theta) * Mi
-                
                 # Add interval vector to current position for next position
-                coords = nm.add (p, i)
+                coords = nm.subtract (p, i)
                 old_p = p 
                 p = (coords[0], coords[1])
                 # Add new postion to predicted path
                 paths[t['name']].append (p)
-
-                #print ("p:", p)
-                #print ("w:", w)
-                #print ("i:", i)
 
                 # Check if the current waypoint has been reached,
                 #  if the distance to current waypoint is less than the distance to new point -> have reached waypoint.
@@ -186,7 +166,7 @@ def predictPath (targets):
                     if(waypoints):
                         s = w
                         w = waypoints.pop(0)
-                        p = w
+                        p = s
                     else:
                         w = None # No more waypoints => terminate prediction
     return paths
@@ -213,8 +193,11 @@ def calcCentroidPath (targets, paths):
         centroid = sum (x) / l, sum (y) / l
         # Add centroid to path
         centroid_path.append (centroid)
+        # Assign centroid path time 
+        time = paths['time']
+        
 	
-    return centroid_path
+    return {'path':centroid_path, 'time':time}
        
 
 #### Main 
@@ -317,7 +300,10 @@ def main ():
     pl.savefig ('predictPath__observed.pdf')
     ####### End Plot
     
+    updatePositions (targets)
+
     # Main loop: Path prediction
+    numRuns = 0
     while (predict == True):
         predict = updatePositions (targets)
         if (predict == False): # No position --> no prediction
@@ -330,12 +316,18 @@ def main ():
         paths = predictPath (targets)
         # use targets' path predictions to predict centroid path
         centroid_path = calcCentroidPath (targets, paths)
-        print (centroid_path)
+        
         ####### Plot: Current path prediction
      
         ####### Plot: Predicted centroid paths
-        pl.plot(*zip(*centroid_path), alpha = 0.7, color = 'grey')
+        pl.plot(*zip(*paths['susan']), 'go')
+        pl.plot(*zip(*paths['anton']), 'bo')
+        pl.plot(*zip(*paths['django']), 'ro')
+        pl.plot(*zip(*centroid_path['path']), 'mo')
         ####### End Plot
+        numRuns = numRuns + 1
+        #print (paths)
+        print (centroid_path)
     pl.savefig ('predictPath__predicted.pdf')
     
 
