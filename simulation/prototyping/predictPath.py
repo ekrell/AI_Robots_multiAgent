@@ -23,6 +23,7 @@ import numpy as nm
 import pylab as pl
 import argparse
 import re
+import matplotlib.patches as patches
 
 # Time between updates (s)
 deltaT_s = .5     # Supposed interval between each periodic observation
@@ -61,6 +62,43 @@ def updatePositions (targets):
             else: # Have lost connection or other critical error
                 return False
     return True
+
+
+def calcFieldOfView (camera):
+    xView = (2 * nm.degrees (math.atan (camera['xSensor_mm'] / (2 * camera['focallen_mm']))))
+    yView = (2 * nm.degrees (math.atan (camera['ySensor_mm'] / (2 * camera['focallen_mm']))))
+    return (xView, yView)
+
+def calcGroundFootprintDimensions (camera, altitude_m):
+    FoV = calcFieldOfView (camera)
+    distFront = altitude_m * (math.tan (nm.radians (camera['xGimbal_deg'] + 0.5 * FoV[0]))) 
+    distBehind = altitude_m * (math.tan (nm.radians (camera['xGimbal_deg'] - 0.5 * FoV[0])))
+    distLeft = altitude_m * (math.tan (nm.radians (camera['yGimbal_deg'] - 0.5 * FoV[1])))
+    distRight = altitude_m * (math.tan (nm.radians (camera['yGimbal_deg'] + 0.5 * FoV[1])))
+    return (distFront, distBehind, distLeft, distRight)
+
+def calcGroundFootprint (camera, altitude_m, position):
+    (distFront, distBehind, distLeft, distRight) = calcGroundFootprintDimensions (camera, altitude_m)
+    posLowerLeft = (position[0] + distLeft, position[1] + distBehind)
+    posLowerRight = (position[0] + distRight, position[1] + distBehind)
+    posUpperLeft = (position[0] + distLeft, position[1] + distFront)
+    posUpperRight = (position[0] + distRight, position[1] + distFront)
+    return (posLowerLeft, posUpperLeft, posUpperRight, posLowerRight)
+
+def calcTimeToStayInPosition(centroidPath, camera, altitude_m):
+    cPath = centroidPath.copy ()
+    waypoint = cPath.pop (0)
+    time_s = 0.5
+    footprint = calcGroundFootprint (camera, altitude_m, waypoint)
+    centroidContained = True
+    while (centroidContained == True and len (cPath) > 0):
+        nextCentroid = cPath.pop (0)
+        # Check if the next centroid is in footprint
+        if (footprint[0][0] < nextCentroid[0] < footprint[0][1] and footprint[1][0] < nextCentroid[1] < footprint[1][1]):
+            time_s = time_s + 0.5
+        else:
+            centroidContained = False 
+    return time_s
 
 def get_angle_2D (a, b):
 # Calculate the angle between two vectors in (R^2)
@@ -252,15 +290,17 @@ def main ():
                     x = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_x[^,}]*', line)[0])[0]
                     y = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_y[^,}]*', line)[0])[0]
                     t['observed_path'].append ( (float (x), float (y), time) )
+
     
+    # Init Quadcopter
+    quad = {'camera': {'xSensor_mm':36, 'ySensor_mm':24, 'focallen_mm':50, 'xGimbal_deg':30, 'yGimbal_deg':0}}
+    quad['altitude'] = 100
+    quad['position'] = (-45, 55)
  
     # Init previous positions to null
     for t in targets:
         t['position_prev'] = (None, None)
 
-    # Init current positions
-        #! Currently via hard-coded data
-    
     # Init speeds to None
     for t in targets: 
         t['speed'] = None
@@ -299,7 +339,7 @@ def main ():
     pl.legend(loc='lower left', shadow=True)
     pl.savefig ('predictPath__observed.pdf')
     ####### End Plot
-    
+
     updatePositions (targets)
 
     # Main loop: Path prediction
@@ -308,10 +348,20 @@ def main ():
         predict = updatePositions (targets)
         if (predict == False): # No position --> no prediction
             break
+        
+        #-------------------------#
+        # Phase 0: Estimate Speed #
+        #-------------------------#
+        
         # Estimate target speeds
         calcSpeed (targets)
         # Calculate centroid using current observations
         centroid['position'] = calcCentroid (targets)
+
+        #--------------------------#
+        # Phase 1: Path Prediction #
+        #--------------------------#
+
         # Predict the paths of the targets
         paths = predictPath (targets)
         # use targets' path predictions to predict centroid path
@@ -327,9 +377,32 @@ def main ():
         ####### End Plot
         numRuns = numRuns + 1
         #print (paths)
-        print (centroid_path)
+        #print (centroid_path)
+
+        #------------------------#
+        # Phase 2 : Positioning  #
+        #------------------------#
+        
+        footprint =  calcGroundFootprint (quad['camera'], quad['altitude'], quad['position'])
+        print (footprint)
+        quad['waypoint'] = centroid_path['path'][0]
+        timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], quad['camera'], quad['altitude'])
+        print (timeToStayAtWaypoint)
+        quad['position'] = quad['waypoint']
+ 
+        ####### Plot: Footprint
+        fig = pl.figure()
+        ax = fig.add_subplot (111, aspect = 'equal')
+        ax.add_patch (
+            patches.Rectangle ( (0.1, 0.1), 0.5, 0.5 ) 
+        )
+        fig.show()
+        
+
+
     pl.savefig ('predictPath__predicted.pdf')
-    
+
+
 
 
 if __name__ == "__main__":
