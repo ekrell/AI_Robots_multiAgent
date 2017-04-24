@@ -23,6 +23,7 @@ import numpy as nm
 import pylab as pl
 import argparse
 import re
+from matplotlib.path import Path
 import matplotlib.patches as patches
 
 # Time between updates (s)
@@ -98,7 +99,8 @@ def calcTimeToStayInPosition(centroidPath, camera, altitude_m):
             time_s = time_s + 0.5
         else:
             centroidContained = False 
-    return time_s
+    return (time_s, (footprint))
+    
 
 def get_angle_2D (a, b):
 # Calculate the angle between two vectors in (R^2)
@@ -178,9 +180,9 @@ def predictPath (targets):
 
         # If speed is 0, no path.. 
         if (t['speed'] != 0):
-            cnt = 0 
-            while (w is not None): # and cnt < 5000): # While waypoints still exist, continue building path prediction
-                cnt = cnt + 1
+            cnt_time = 0
+            while (w is not None and cnt_time < 30): # and cnt < 5000): # While waypoints still exist, continue building path prediction
+                cnt_time = cnt_time + 0.5
                 i = (t['speed'] * deltaTT_s, 0)
                 l = nm.subtract (p, w)
                 tt = nm.arctan2(l[1], l[0])
@@ -233,8 +235,6 @@ def calcCentroidPath (targets, paths):
         centroid_path.append (centroid)
         # Assign centroid path time 
         time = paths['time']
-        
-	
     return {'path':centroid_path, 'time':time}
        
 
@@ -293,9 +293,10 @@ def main ():
 
     
     # Init Quadcopter
-    quad = {'camera': {'xSensor_mm':36, 'ySensor_mm':24, 'focallen_mm':50, 'xGimbal_deg':30, 'yGimbal_deg':0}}
-    quad['altitude'] = 100
+    quad = {'camera': {'xSensor_mm':36, 'ySensor_mm':24, 'focallen_mm':50, 'xGimbal_deg':20, 'yGimbal_deg':0}}
+    quad['altitude'] = 25
     quad['position'] = (-45, 55)
+    quad['heading'] = 0
  
     # Init previous positions to null
     for t in targets:
@@ -382,24 +383,63 @@ def main ():
         #------------------------#
         # Phase 2 : Positioning  #
         #------------------------#
-        
-        footprint =  calcGroundFootprint (quad['camera'], quad['altitude'], quad['position'])
-        print (footprint)
+
+        # Set waypoint at first predicted centroid
         quad['waypoint'] = centroid_path['path'][0]
+        # Set heading angle toward the waypoint
+        p = (quad['position'][0], quad['position'][1]) 
+        w = quad['waypoint']
+        i = nm.subtract (p, w)
+        theta = nm.arctan2 (i[1], i[0])
+        if (theta < 0):
+            theta = theta + 2 * math.pi
+        quad['heading_angle'] = theta
+        print (theta)
+
+        # Go to waypoint
+        # ! Code here
+        
+        # Get current ground footprint
+        footprint =  calcGroundFootprint (quad['camera'], quad['altitude'], quad['position'])
+
+        # Rotate footprint toward heading
+        (xCenter, yCenter) = ( (footprint[3][0] + footprint[0][0])/2, (footprint[3][1] + footprint[0][1])/2 )
+        t1 = (footprint[0][0] - xCenter, footprint[0][1] - yCenter)
+        t2 = (footprint[1][0] - xCenter, footprint[1][1] - yCenter)
+        t3 = (footprint[2][0] - xCenter, footprint[2][1] - yCenter)
+        t4 = (footprint[3][0] - xCenter, footprint[3][1] - yCenter)
+        p1 = (nm.cos (theta) * t1[0] - nm.sin (theta) * t1[1] + xCenter,
+              nm.sin (theta) * t1[0] + nm.cos (theta) * t1[1] + yCenter
+        )                                                   
+        p2 = (nm.cos (theta) * t2[0] - nm.sin (theta) * t2[1] + xCenter,
+              nm.sin (theta) * t2[0] + nm.cos (theta) * t2[1] + yCenter
+        )                                                   
+        p3 = (nm.cos (theta) * t3[0] - nm.sin (theta) * t3[1] + xCenter,
+              nm.sin (theta) * t3[0] + nm.cos (theta) * t3[1] + yCenter
+        )                                                   
+        p4 = (nm.cos (theta) * t4[0] - nm.sin (theta) * t4[1] + xCenter,
+              nm.sin (theta) * t4[0] + nm.cos (theta) * t4[1] + yCenter
+        )
+        
+        # How long to stay in position
         timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], quad['camera'], quad['altitude'])
         print (timeToStayAtWaypoint)
         quad['position'] = quad['waypoint']
  
         ####### Plot: Footprint
-        fig = pl.figure()
-        ax = fig.add_subplot (111, aspect = 'equal')
-        ax.add_patch (
-            patches.Rectangle ( (0.1, 0.1), 0.5, 0.5 ) 
-        )
-        fig.show()
-        
-
-
+        # Source = http://matplotlib.org/users/path_tutorial.html
+        verts = [p1, p2, p3, p4, (0,0)]
+        print ("v", verts)
+        codes = [Path.MOVETO,
+            Path.LINETO,
+            Path.LINETO,
+            Path.LINETO,
+            Path.CLOSEPOLY,
+            ]
+        path = Path (verts, codes)
+        patch = patches.PathPatch (path, facecolor = 'orange', lw = 2)
+        pl.gca().add_patch (patch)
+        #######
     pl.savefig ('predictPath__predicted.pdf')
 
 
