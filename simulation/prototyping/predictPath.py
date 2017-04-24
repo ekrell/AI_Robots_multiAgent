@@ -25,10 +25,12 @@ import argparse
 import re
 from matplotlib.path import Path
 import matplotlib.patches as patches
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 # Time between updates (s)
-deltaT_s = .5     # Supposed interval between each periodic observation
-deltaTT_s = .5   # Interval between estimated positions
+deltaT_s = .2     # Supposed interval between each periodic observation
+deltaTT_s = .2   # Interval between estimated positions
 
 #### Function Definitions
 
@@ -49,33 +51,30 @@ def updatePositions (targets):
         t['position_prev'] = t['position']
    
         w = t['waypoints'][0] # Get current waypoint
-        skip = 10
-        for i in range(skip):
-            if (len (t['observed_path']) > 1):
-            
-                t['position'] = t['observed_path'].pop (0)
-                if (t['position'] == 'A'):
-                    if (t['observed_path']):
-                        t['position'] = t['observed_path'].pop (0)
-                        t['waypoints'].pop(0)
-                    else:
-                        t['position'] = t['position_prev']
-            else: # Have lost connection or other critical error
-                return False
+        if (len (t['observed_path']) > 0):
+            t['position'] = t['observed_path'].pop (0)
+            if (t['position'] == 'A'):
+                if (t['observed_path']):
+                    t['position'] = t['observed_path'].pop (0)
+                    t['waypoints'].pop(0)
+                else:
+                    t['position'] = t['position_prev']
+        else: # Have lost connection or other critical error
+            return False
     return True
 
 
 def calcFieldOfView (camera):
-    xView = (2 * nm.degrees (math.atan (camera['xSensor_mm'] / (2 * camera['focallen_mm']))))
-    yView = (2 * nm.degrees (math.atan (camera['ySensor_mm'] / (2 * camera['focallen_mm']))))
+    xView = (2 * math.atan (camera['xSensor_mm'] / (2 * camera['focallen_mm'])))
+    yView = (2 * math.atan (camera['ySensor_mm'] / (2 * camera['focallen_mm'])))
     return (xView, yView)
 
 def calcGroundFootprintDimensions (camera, altitude_m):
     FoV = calcFieldOfView (camera)
-    distFront = altitude_m * (math.tan (nm.radians (camera['xGimbal_deg'] + 0.5 * FoV[0]))) 
-    distBehind = altitude_m * (math.tan (nm.radians (camera['xGimbal_deg'] - 0.5 * FoV[0])))
-    distLeft = altitude_m * (math.tan (nm.radians (camera['yGimbal_deg'] - 0.5 * FoV[1])))
-    distRight = altitude_m * (math.tan (nm.radians (camera['yGimbal_deg'] + 0.5 * FoV[1])))
+    distFront = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) + 0.5 * FoV[0])) 
+    distBehind = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) - 0.5 * FoV[0]))
+    distLeft = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) - 0.5 * FoV[1]))
+    distRight = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) + 0.5 * FoV[1]))
     return (distFront, distBehind, distLeft, distRight)
 
 def calcGroundFootprint (camera, altitude_m, position):
@@ -86,20 +85,26 @@ def calcGroundFootprint (camera, altitude_m, position):
     posUpperRight = (position[0] + distRight, position[1] + distFront)
     return (posLowerLeft, posUpperLeft, posUpperRight, posLowerRight)
 
-def calcTimeToStayInPosition(centroidPath, camera, altitude_m):
+def calcTimeToStayInPosition(centroidPath, footprint):
+
+    polygon = Polygon (footprint)
+
     cPath = centroidPath.copy ()
-    waypoint = cPath.pop (0)
-    time_s = 0.5
-    footprint = calcGroundFootprint (camera, altitude_m, waypoint)
+    #print (cPath)
+    time_s = 1
     centroidContained = True
+    # print ('f', footprint)
     while (centroidContained == True and len (cPath) > 0):
         nextCentroid = cPath.pop (0)
+        point = Point (nextCentroid)
+        #print (nextCentroid)
         # Check if the next centroid is in footprint
-        if (footprint[0][0] < nextCentroid[0] < footprint[0][1] and footprint[1][0] < nextCentroid[1] < footprint[1][1]):
-            time_s = time_s + 0.5
+        if (polygon.contains (point)):
+            time_s = time_s + 1 
         else:
             centroidContained = False 
-    return (time_s, (footprint))
+    print (time_s)
+    return time_s
     
 
 def get_angle_2D (a, b):
@@ -111,6 +116,20 @@ def get_angle_2D (a, b):
   x = -1.0 if x < -1.0 else x
   x = math.acos(x)
   return x
+
+def get_coords_in_radius(t, s, r):
+# Calculate the x,y coordinates needed
+# to set a waypoint such that a point
+# will go to the nearest point to a target,
+# but at a radius r from it.
+# t - target, a 2D numeric array
+# s - current location, a 2D numeric array
+# r - radius, a number
+    theta = get_angle_2D (s, t)
+    w = nm.subtract (s,t)
+    w_norm = nm.linalg.norm (w)
+    coords = nm.add (t, nm.multiply (r, (w / nm.linalg.norm (w))))
+    return coords
 
 def rotatePoint(centerPoint,point,angle):
     """Rotates a point around another centerPoint. Angle is in degrees.
@@ -165,7 +184,7 @@ def predictPath (targets):
     # Init empty paths, where each path is accessable by target's name
     paths = dict.fromkeys( [t['name'] for t in targets] )    
     for t in targets:
-        paths['time'] = t['position'][2]  # ! Is written over each time, but matters little since all ~same time
+        paths['time'] = t['position'][0]  # ! Is written over each time, but matters little since all ~same time
 
         # Init path list, where is every item is the next predicted point after a deltaTT interval
         waypoints = t['waypoints'].copy()
@@ -181,8 +200,8 @@ def predictPath (targets):
         # If speed is 0, no path.. 
         if (t['speed'] != 0):
             cnt_time = 0
-            while (w is not None and cnt_time < 30): # and cnt < 5000): # While waypoints still exist, continue building path prediction
-                cnt_time = cnt_time + 0.5
+            while (w is not None and cnt_time < 30): # While waypoints still exist, continue building path prediction
+                cnt_time = cnt_time + 0.2
                 i = (t['speed'] * deltaTT_s, 0)
                 l = nm.subtract (p, w)
                 tt = nm.arctan2(l[1], l[0])
@@ -238,8 +257,6 @@ def calcCentroidPath (targets, paths):
     return {'path':centroid_path, 'time':time}
        
 
-#### Main 
-
 def main ():
     # Parse arguments
     parser = argparse.ArgumentParser()
@@ -251,10 +268,7 @@ def main ():
     if (args.names is None):
         print ("Must supply targets with -n")
         exit (0)
-    
-    
     target_names = args.names.split (",")
-    print (target_names)
     
     # Parse targets, waypoints, initial positions
     targets = [{'name':x, 'position_prev':(None, None), 'position':(None, None), 'source':(None, None), 'speed':None} for x in target_names]
@@ -276,7 +290,7 @@ def main ():
     
     # Parse target's observed path points
     for t in targets:
-        fh = args.path_dir + t['name'] + ".path"
+        fh = args.path_dir + t['name'] + "_2s.path"
         t['observed_path'] = [t['source']]
         with open (fh) as f:
             path = f.readlines ()
@@ -293,9 +307,9 @@ def main ():
 
     
     # Init Quadcopter
-    quad = {'camera': {'xSensor_mm':36, 'ySensor_mm':24, 'focallen_mm':50, 'xGimbal_deg':20, 'yGimbal_deg':0}}
+    quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0, 'yGimbal_deg':20}}
     quad['altitude'] = 25
-    quad['position'] = (-45, 55)
+    quad['position'] = (-40, 45)
     quad['heading'] = 0
  
     # Init previous positions to null
@@ -325,7 +339,7 @@ def main ():
         cnt = cnt + 1
         pl.legend ()
     x1, x2, y1, y2 = pl.axis()
-    pl.axis ((x1 - 10, x2 + 10, y1 - 10 , y2 + 10))
+    pl.axis ((x1 - 50, x2 + 50, y1 - 50 , y2 + 50))
     pl.legend(loc='lower left', shadow=True)
     pl.savefig ('predictPath__waypoints.pdf')
     ####### End Plot
@@ -341,12 +355,19 @@ def main ():
     pl.savefig ('predictPath__observed.pdf')
     ####### End Plot
 
+    # Handles communication
     updatePositions (targets)
 
     # Main loop: Path prediction
     numRuns = 0
+    timeRun = 0
+    numSkip = 1
     while (predict == True):
-        predict = updatePositions (targets)
+        
+        # Skip updates based of loop, since
+        numSkip = min (timeRun, 10)
+        for i in range (numSkip):
+            predict = updatePositions (targets)
         if (predict == False): # No position --> no prediction
             break
         
@@ -371,39 +392,58 @@ def main ():
         ####### Plot: Current path prediction
      
         ####### Plot: Predicted centroid paths
-        pl.plot(*zip(*paths['susan']), 'go')
-        pl.plot(*zip(*paths['anton']), 'bo')
-        pl.plot(*zip(*paths['django']), 'ro')
+        #pl.plot(*zip(*paths['susan']), 'go')
+        #pl.plot(*zip(*paths['anton']), 'bo')
+        #pl.plot(*zip(*paths['django']), 'ro')
         pl.plot(*zip(*centroid_path['path']), 'mo')
         ####### End Plot
+
         numRuns = numRuns + 1
-        #print (paths)
-        #print (centroid_path)
 
         #------------------------#
         # Phase 2 : Positioning  #
         #------------------------#
 
-        # Set waypoint at first predicted centroid
-        quad['waypoint'] = centroid_path['path'][0]
+        # Determine standoff distance
+        points = [(t['position'][0], t['position'][1]) for t in targets]
+        c = (centroid['position'][0], centroid['position'][1])
+        maxDist = max ( [((p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 ) ** (.5) for p in points] ) 
+        standoffDist = 1#maxDist
+        
+        # Set waypoint as first predicted centroid
+        if (len (centroid_path['path']) > 1):
+            nextCentroid = centroid_path['path'][1]
+        else:
+            nextCentroid = centroid_path['path'][0]
+        if (len (centroid_path['path']) > 2):
+            futureCentroid = centroid_path['path'][1]
+        else:
+             futureCentroid = nextCentroid
+
+        # Go to waypoint
+        quad['waypoint'] = get_coords_in_radius (nextCentroid, quad['position'], standoffDist)
+        quad['position_prev'] = quad['position']
+        quad['position'] = quad['waypoint']
+
         # Set heading angle toward the waypoint
-        p = (quad['position'][0], quad['position'][1]) 
+        #p = (quad['position']) 
+        p = futureCentroid
+        #p = quad['position_prev']
         w = quad['waypoint']
-        i = nm.subtract (p, w)
+        print (w)
+        i = nm.subtract (w, p)
         theta = nm.arctan2 (i[1], i[0])
+        theta = nm.arctan2 (p[1], p[0])
         if (theta < 0):
             theta = theta + 2 * math.pi
         quad['heading_angle'] = theta
         print (theta)
 
-        # Go to waypoint
-        # ! Code here
-        
         # Get current ground footprint
         footprint =  calcGroundFootprint (quad['camera'], quad['altitude'], quad['position'])
 
         # Rotate footprint toward heading
-        (xCenter, yCenter) = ( (footprint[3][0] + footprint[0][0])/2, (footprint[3][1] + footprint[0][1])/2 )
+        (xCenter, yCenter) = ( (footprint[0][0] + footprint[2][0])/2, (footprint[0][1] + footprint[2][1])/2 )
         t1 = (footprint[0][0] - xCenter, footprint[0][1] - yCenter)
         t2 = (footprint[1][0] - xCenter, footprint[1][1] - yCenter)
         t3 = (footprint[2][0] - xCenter, footprint[2][1] - yCenter)
@@ -420,16 +460,15 @@ def main ():
         p4 = (nm.cos (theta) * t4[0] - nm.sin (theta) * t4[1] + xCenter,
               nm.sin (theta) * t4[0] + nm.cos (theta) * t4[1] + yCenter
         )
-        
+
+        footprint = (p1, p2, p3, p4) 
+
         # How long to stay in position
-        timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], quad['camera'], quad['altitude'])
-        print (timeToStayAtWaypoint)
-        quad['position'] = quad['waypoint']
+        timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], footprint)
  
         ####### Plot: Footprint
         # Source = http://matplotlib.org/users/path_tutorial.html
         verts = [p1, p2, p3, p4, (0,0)]
-        print ("v", verts)
         codes = [Path.MOVETO,
             Path.LINETO,
             Path.LINETO,
@@ -440,6 +479,8 @@ def main ():
         patch = patches.PathPatch (path, facecolor = 'orange', lw = 2)
         pl.gca().add_patch (patch)
         #######
+
+        timeRun = timeToStayAtWaypoint
     pl.savefig ('predictPath__predicted.pdf')
 
 
