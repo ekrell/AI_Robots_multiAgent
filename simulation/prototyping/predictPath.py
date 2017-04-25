@@ -30,7 +30,7 @@ from shapely.geometry.polygon import Polygon
 
 # Time between updates (s)
 deltaT_s = 2    # Interval between target's position messages
-deltaTT_s = 12   # Interval between estimated positions
+deltaTT_s = 2   # Interval between estimated positions
 
 #### Function Definitions
 
@@ -55,9 +55,12 @@ def updatePositions (targets):
         if (len (t['observed_path']) > 0):
             t['position'] = t['observed_path'].pop (0)
             if (t['position'] == 'A'):
-                if (t['observed_path']):
+                if (len (t['observed_path']) > 0):
                     t['position'] = t['observed_path'].pop (0)
                     t['waypoints'].pop(0)
+                else:
+                    t['position'] = t['waypoints'][0]
+                    t['position_prev'] = t['position']
             #t['position'] = t['waypoints'][0]
             #t['position_prev'] = t['position']
         else: # Have lost connection or other critical error
@@ -351,13 +354,13 @@ def main ():
                     time = re.findall('[0-9]*:[0-9]*:[0-9]*', time)[0]
                     x = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_x[^,}]*', line)[0])[0]
                     y = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_y[^,}]*', line)[0])[0]
-                    t['observed_path'].append ( (float (x), float (y), time) )
+                    t['observed_path'].append ( (float (x), float (y)) )
 
     
     # Init Quadcopter
     quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0, 'yGimbal_deg':20}}
-    quad['altitude'] = 25
-    quad['position'] = (-40, 45)
+    quad['altitude'] = 50
+    quad['position'] = (-60, 60)
     quad['heading'] = 0
  
     # Init previous positions to null
@@ -451,22 +454,39 @@ def main ():
         # Determine standoff distance
         points = [(t['position'][0], t['position'][1]) for t in targets]
         c = (centroid['position'][0], centroid['position'][1])
-        maxDist = max ( [((p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 ) ** (.5) for p in points] ) 
-        standoffDist = maxDist
+        c = quad['position']
+        lowDist = 100
+        for t in targets: 
+            p = t['position']
+            distFromCentroid = ((p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 ) ** (.5)
+            if (distFromCentroid < lowDist):
+                lowDist = distFromCentroid
+                maxTarget = t
+        standoffDist = 1
+        #print (lowDist, maxTarget['name'])
+         
         
         # Set waypoint as first predicted centroid
         if (len (centroid_path['path']) > 1):
             nextCentroid = centroid_path['path'][1]
         else:
             nextCentroid = centroid_path['path'][0]
-        if (len (centroid_path['path']) > 5):
-            futureCentroid = centroid_path['path'][4]
-        else:
-             futureCentroid = nextCentroid
+        #if (len (centroid_path['path']) > 5):
+        #    futureCentroid = centroid_path['path'][4]
+        #else:
+        #     futureCentroid = nextCentroid
 
+        # Get waypoint centroid
+        nextWaypoints = [t['waypoints'][0] for t in targets]
+        x, y = zip (*nextWaypoints)
+        l = len (x)
+        wayCenter = ( sum (x) / l, sum (y) / l )
+        futureCentroid = wayCenter
+
+        
+     
         # Go to waypoint
-        #quad['waypoint'] = get_coords_in_radius (nextCentroid, quad['position'], standoffDist)
-        quad['waypoint'] = get_coords_in_radius (nextCentroid, quad['position'], standoffDist)
+        quad['waypoint'] = get_coords_in_radius (maxTarget['position'], quad['position'], standoffDist)
         quad['position_prev'] = quad['position']
         quad['position'] = quad['waypoint']
 
