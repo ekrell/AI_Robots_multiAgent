@@ -42,7 +42,7 @@ def main ():
 
     # Parse target's observed path points
     for t in targets:
-        fh = args.path_dir + t['name'] + ".path"
+        fh = args.path_dir + t['name'] + "_2s.path"
         t['observed_path'] = [t['source']]
         with open (fh) as f:
             path = f.readlines ()
@@ -67,7 +67,7 @@ def main ():
             coverageData.append (CSVrow)
     # Init 
     timeEllapsed_s = 0
-    observationTimeInterval_s = 1
+    observationTimeInterval_s = 2
 
     # Main Evaluation Loop
     for c in coverageData:

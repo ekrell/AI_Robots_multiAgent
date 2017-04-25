@@ -31,6 +31,7 @@ from shapely.geometry.polygon import Polygon
 # Time between updates (s)
 deltaT_s = 2    # Interval between target's position messages
 deltaTT_s = 2   # Interval between estimated positions
+maxWait = 20
 
 #### Function Definitions
 
@@ -359,7 +360,7 @@ def main ():
     
     # Init Quadcopter
     quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0, 'yGimbal_deg':20}}
-    quad['altitude'] = 50
+    quad['altitude'] = 25
     quad['position'] = (-60, 60)
     quad['heading'] = 0
  
@@ -412,10 +413,13 @@ def main ():
     # Main loop: Path prediction
     numRuns = 0
     timeRun = 0
+
+    prev = None
+ 
     while (predict == True):
         
         # Skip updates based off of loop, since
-        numSkip = math.ceil (timeRun / deltaT_s)
+        numSkip = timeRun #/ deltaT_s)
         for i in range (numSkip):
             if(predict == True):
                  predict = updatePositions (targets)
@@ -451,6 +455,7 @@ def main ():
         # Phase 2 : Positioning  #
         #------------------------#
 
+
         # Determine standoff distance
         points = [(t['position'][0], t['position'][1]) for t in targets]
         c = (centroid['position'][0], centroid['position'][1])
@@ -465,6 +470,7 @@ def main ():
         standoffDist = 1
         #print (lowDist, maxTarget['name'])
          
+        pl.plot ([maxTarget['position'][0]], [maxTarget['position'][1]], marker = 'x')
         
         # Set waypoint as first predicted centroid
         if (len (centroid_path['path']) > 1):
@@ -486,9 +492,13 @@ def main ():
         
      
         # Go to waypoint
-        quad['waypoint'] = get_coords_in_radius (maxTarget['position'], quad['position'], standoffDist)
+        if (prev is not None):
+            quad['waypoint'] = get_coords_in_radius (maxTarget['position'], prev, standoffDist)
+        else: 
+            quad['waypoint'] = get_coords_in_radius (maxTarget['position'], quad['position'], standoffDist)
         quad['position_prev'] = quad['position']
         quad['position'] = quad['waypoint']
+        prev = maxTarget['position']
 
         # Set heading angle toward the waypoint
         p = quad['position_prev']
@@ -508,6 +518,7 @@ def main ():
                      rotatePoint (w, footprint[3], theta)]
         # How long to stay in position
         timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], footprint)
+        timeToStayAtWaypoint = min (timeToStayAtWaypoint, maxWait)
         
         # Logging:
         # Build CSV row of footprint information
