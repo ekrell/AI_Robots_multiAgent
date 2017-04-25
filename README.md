@@ -99,8 +99,17 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 	 Execute in terminal
 	
 		brew tap morse-simulator/morse; brew install morse-simulator;
+		
+8. Return to Quick Start Simulation at the top.  
 
-8) Sources
+9. Sources
 	a. https://www.openrobots.org/morse/doc/stable/user/installation/package_manager/homebrew_osx.html
 	b. https://github.com/morse-simulator/homebrew-morse
 	c. https://github.com/caskroom/homebrew-cask/blob/master/Casks/blender.rb
+
+
+10. additionall libraries you may need to install
+	a. matplotlib
+	b. scipy
+	c. shapely
+	d. numpy
