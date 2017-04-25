@@ -49,8 +49,9 @@ def updatePositions (targets):
     for t in targets:
         # The current position is now the previous position
         t['position_prev'] = t['position']
-   
-        w = t['waypoints'][0] # Get current waypoint
+        # Get current waypoint
+
+        w = t['waypoints'][0]         
         if (len (t['observed_path']) > 0):
             t['position'] = t['observed_path'].pop (0)
             if (t['position'] == 'A'):
@@ -58,6 +59,8 @@ def updatePositions (targets):
                     t['position'] = t['observed_path'].pop (0)
                     t['waypoints'].pop(0)
         else: # Have lost connection or other critical error
+            t['position'] = t['waypoints'][0]
+            t['position_prev'] = t['position']
             return False
     return True
 
@@ -166,6 +169,7 @@ def calcSpeed (targets):
         Estimate a targets speed as (distance in time interval) / (time interval)
     """
     for t in targets:
+        print (t)
         t['speed'] = (((t['position'][0] - t['position_prev'][0]) ** 2 + (t['position'][1] - t['position_prev'][1]) ** 2 ) ** (.5)) / (deltaT_s)
 
 def predictPath (targets):
@@ -371,11 +375,8 @@ def main ():
         # Skip updates based of loop, since
         numSkip = timeRun
         for i in range (numSkip):
-            predict = updatePositions (targets)
-            lastWaypoint =
-        if (predict == False): # No position --> no prediction
-                    
-            break
+            if(predict == True):
+                 predict = updatePositions (targets)
         
         #-------------------------#
         # Phase 0: Estimate Speed #
