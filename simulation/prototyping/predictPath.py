@@ -57,8 +57,6 @@ def updatePositions (targets):
                 if (t['observed_path']):
                     t['position'] = t['observed_path'].pop (0)
                     t['waypoints'].pop(0)
-                else:
-                    t['position'] = t['position_prev']
         else: # Have lost connection or other critical error
             return False
     return True
@@ -86,24 +84,18 @@ def calcGroundFootprint (camera, altitude_m, position):
     return (posLowerLeft, posUpperLeft, posUpperRight, posLowerRight)
 
 def calcTimeToStayInPosition(centroidPath, footprint):
-
     polygon = Polygon (footprint)
-
     cPath = centroidPath.copy ()
-    #print (cPath)
     time_s = 1
     centroidContained = True
-    # print ('f', footprint)
     while (centroidContained == True and len (cPath) > 0):
         nextCentroid = cPath.pop (0)
         point = Point (nextCentroid)
-        #print (nextCentroid)
         # Check if the next centroid is in footprint
         if (polygon.contains (point)):
             time_s = time_s + 1 
         else:
             centroidContained = False 
-    print (time_s)
     return time_s
     
 
@@ -111,11 +103,11 @@ def get_angle_2D (a, b):
 # Calculate the angle between two vectors in (R^2)
 # a - a 2D numeric array
 # b - a 2D numeric array
-  x = nm.dot(a, b) / nm.linalg.norm(a) / nm.linalg.norm(b)
-  x = 1.0 if x > 1.0 else x
-  x = -1.0 if x < -1.0 else x
-  x = math.acos(x)
-  return x
+    x = nm.dot(a, b) / nm.linalg.norm(a) / nm.linalg.norm(b)
+    x = 1.0 if x > 1.0 else x
+    x = -1.0 if x < -1.0 else x
+    x = math.acos(x)
+    return x
 
 def get_coords_in_radius(t, s, r):
 # Calculate the x,y coordinates needed
@@ -139,6 +131,16 @@ def rotatePoint(centerPoint,point,angle):
     temp_point = ( temp_point[0]*math.cos(angle)-temp_point[1]*math.sin(angle) , temp_point[0]*math.sin(angle)+temp_point[1]*math.cos(angle))
     temp_point = temp_point[0]+centerPoint[0] , temp_point[1]+centerPoint[1]
     return temp_point
+
+def rotatePolygon(polygon,theta):
+    """Rotates the given polygon which consists of corners represented as (x,y),
+    around the ORIGIN, clock-wise, theta degrees"""
+    theta = math.radians(theta)
+    rotatedPolygon = []
+    for corner in polygon :
+        rotatedPolygon.append(( corner[0]*math.cos(theta)-corner[1]*math.sin(theta) , corner[0]*math.sin(theta)+corner[1]*math.cos(theta)) )
+    return rotatedPolygon
+
 
 def calcCentroid (targets):
     """
@@ -197,10 +199,10 @@ def predictPath (targets):
         t['source'] = t['position']
         s = t['source']
 
-        # If speed is 0, no path.. 
+        # If speed is 0
         if (t['speed'] != 0):
             cnt_time = 0
-            while (w is not None and cnt_time < 30): # While waypoints still exist, continue building path prediction
+            while (w is not None): # and cnt_time < 30): # While waypoints still exist, continue building path prediction
                 cnt_time = cnt_time + 0.2
                 i = (t['speed'] * deltaTT_s, 0)
                 l = nm.subtract (p, w)
@@ -228,6 +230,9 @@ def predictPath (targets):
                         p = s
                     else:
                         w = None # No more waypoints => terminate prediction
+        else:
+            # Stationary targets
+            paths[t['name']].append (p)
     return paths
 
 def calcCentroidPath (targets, paths):
@@ -361,14 +366,15 @@ def main ():
     # Main loop: Path prediction
     numRuns = 0
     timeRun = 0
-    numSkip = 1
     while (predict == True):
         
         # Skip updates based of loop, since
-        numSkip = min (timeRun, 10)
+        numSkip = timeRun
         for i in range (numSkip):
             predict = updatePositions (targets)
+            lastWaypoint =
         if (predict == False): # No position --> no prediction
+                    
             break
         
         #-------------------------#
@@ -395,7 +401,7 @@ def main ():
         #pl.plot(*zip(*paths['susan']), 'go')
         #pl.plot(*zip(*paths['anton']), 'bo')
         #pl.plot(*zip(*paths['django']), 'ro')
-        pl.plot(*zip(*centroid_path['path']), 'mo')
+        pl.plot(*zip(*centroid_path['path']), 'o')
         ####### End Plot
 
         numRuns = numRuns + 1
@@ -408,67 +414,47 @@ def main ():
         points = [(t['position'][0], t['position'][1]) for t in targets]
         c = (centroid['position'][0], centroid['position'][1])
         maxDist = max ( [((p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 ) ** (.5) for p in points] ) 
-        standoffDist = 1#maxDist
+        standoffDist = maxDist
         
         # Set waypoint as first predicted centroid
         if (len (centroid_path['path']) > 1):
             nextCentroid = centroid_path['path'][1]
         else:
             nextCentroid = centroid_path['path'][0]
-        if (len (centroid_path['path']) > 2):
-            futureCentroid = centroid_path['path'][1]
+        if (len (centroid_path['path']) > 5):
+            futureCentroid = centroid_path['path'][4]
         else:
              futureCentroid = nextCentroid
 
         # Go to waypoint
+        #quad['waypoint'] = get_coords_in_radius (nextCentroid, quad['position'], standoffDist)
         quad['waypoint'] = get_coords_in_radius (nextCentroid, quad['position'], standoffDist)
         quad['position_prev'] = quad['position']
         quad['position'] = quad['waypoint']
 
         # Set heading angle toward the waypoint
-        #p = (quad['position']) 
-        p = futureCentroid
-        #p = quad['position_prev']
+        p = quad['position_prev']
         w = quad['waypoint']
-        print (w)
-        i = nm.subtract (w, p)
+        n = futureCentroid
+        i = nm.subtract (n, w)
         theta = nm.arctan2 (i[1], i[0])
-        theta = nm.arctan2 (p[1], p[0])
         if (theta < 0):
             theta = theta + 2 * math.pi
         quad['heading_angle'] = theta
-        print (theta)
 
         # Get current ground footprint
         footprint =  calcGroundFootprint (quad['camera'], quad['altitude'], quad['position'])
-
-        # Rotate footprint toward heading
-        (xCenter, yCenter) = ( (footprint[0][0] + footprint[2][0])/2, (footprint[0][1] + footprint[2][1])/2 )
-        t1 = (footprint[0][0] - xCenter, footprint[0][1] - yCenter)
-        t2 = (footprint[1][0] - xCenter, footprint[1][1] - yCenter)
-        t3 = (footprint[2][0] - xCenter, footprint[2][1] - yCenter)
-        t4 = (footprint[3][0] - xCenter, footprint[3][1] - yCenter)
-        p1 = (nm.cos (theta) * t1[0] - nm.sin (theta) * t1[1] + xCenter,
-              nm.sin (theta) * t1[0] + nm.cos (theta) * t1[1] + yCenter
-        )                                                   
-        p2 = (nm.cos (theta) * t2[0] - nm.sin (theta) * t2[1] + xCenter,
-              nm.sin (theta) * t2[0] + nm.cos (theta) * t2[1] + yCenter
-        )                                                   
-        p3 = (nm.cos (theta) * t3[0] - nm.sin (theta) * t3[1] + xCenter,
-              nm.sin (theta) * t3[0] + nm.cos (theta) * t3[1] + yCenter
-        )                                                   
-        p4 = (nm.cos (theta) * t4[0] - nm.sin (theta) * t4[1] + xCenter,
-              nm.sin (theta) * t4[0] + nm.cos (theta) * t4[1] + yCenter
-        )
-
-        footprint = (p1, p2, p3, p4) 
-
+        footprint = [rotatePoint (w, footprint[0], theta), 
+                     rotatePoint (w, footprint[1], theta), 
+                     rotatePoint (w, footprint[2], theta),
+                     rotatePoint (w, footprint[3], theta)]
         # How long to stay in position
         timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], footprint)
  
         ####### Plot: Footprint
         # Source = http://matplotlib.org/users/path_tutorial.html
-        verts = [p1, p2, p3, p4, (0,0)]
+        verts = footprint
+        verts.append ( (0, 0) )
         codes = [Path.MOVETO,
             Path.LINETO,
             Path.LINETO,
