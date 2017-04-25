@@ -64,24 +64,24 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 	
 		'/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
 
-3. Install Blender	
-	a. Execute in terminal
+3. Install Blender
+	1. Execute in terminal
 		
 		brew install Caskroom/cask/blender
 		
-	b. Create reference to blender by adding i. to your profile such as in ii.
+	2.  Create reference to blender by adding i. to your profile such as in ii.
 		
 		MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender
 			
 		sudo nano /etc/bashrc
 
-	c. Append the following string to bashrc file 
+	3.  Append the following string to bashrc file 
 	
 		export MORSE_BLENDER=/Applications/Blender.app/Contents/MacOS/blender
 
 4. Install Python 3  (At the time of this writeup the proper version of python to use is python 3.5.2 and brew does not have any old versions on tap so you download and install manually which is trivial)
-	a. Download and install Python3 @ https://www.python.org/downloads/release/python-352/
-	b. You may want to check and verify your python version by executing the following in terminal
+	1. Download and install Python3 @ https://www.python.org/downloads/release/python-352/
+	2. You may want to check and verify your python version by executing the following in terminal
 		
 		echo 'import sys; print("VERSION %s" % sys.version.split()[0]); sys.exit(0)' > /tmp/version.py ${MORSE_BLENDER} -y -P /tmp/version.py 2>&1 | grep VERSION
 
@@ -103,13 +103,13 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 8. Return to Quick Start Simulation at the top.  
 
 9. Sources
-	a. https://www.openrobots.org/morse/doc/stable/user/installation/package_manager/homebrew_osx.html
-	b. https://github.com/morse-simulator/homebrew-morse
-	c. https://github.com/caskroom/homebrew-cask/blob/master/Casks/blender.rb
+	- https://www.openrobots.org/morse/doc/stable/user/installation/package_manager/homebrew_osx.html
+	- https://github.com/morse-simulator/homebrew-morse
+	- https://github.com/caskroom/homebrew-cask/blob/master/Casks/blender.rb
 
 
-10. additionall libraries you may need to install
-	a. matplotlib
-	b. scipy
-	c. shapely
-	d. numpy
+10. additionall libraries you may need to install using pip
+	- matplotlib
+	- scipy
+	- shapely
+	- numpy
