@@ -29,8 +29,8 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 # Time between updates (s)
-deltaT_s = .2     # Supposed interval between each periodic observation
-deltaTT_s = .2   # Interval between estimated positions
+deltaT_s = 2    # Interval between target's position messages
+deltaTT_s = 12   # Interval between estimated positions
 
 #### Function Definitions
 
@@ -38,7 +38,7 @@ def updatePositions (targets):
     """
     Function : updatePositions
     Arguments:
-        targets: List of 'Target' structs
+        targets: List of 'Target' objects
     Purpose:
         Update the target's current position while also
         setting the target's previous position and updates
@@ -58,19 +58,38 @@ def updatePositions (targets):
                 if (t['observed_path']):
                     t['position'] = t['observed_path'].pop (0)
                     t['waypoints'].pop(0)
+            #t['position'] = t['waypoints'][0]
+            #t['position_prev'] = t['position']
         else: # Have lost connection or other critical error
             t['position'] = t['waypoints'][0]
             t['position_prev'] = t['position']
             return False
     return True
 
-
 def calcFieldOfView (camera):
+    """
+    Function: calcFieldOfView
+    Arguments:
+        camera: Camera object
+    Purpose:
+        Calculate the field of view (FoV) for a camera 
+        given the x and y sensor dimensions and the focal length
+    """
     xView = (2 * math.atan (camera['xSensor_mm'] / (2 * camera['focallen_mm'])))
     yView = (2 * math.atan (camera['ySensor_mm'] / (2 * camera['focallen_mm'])))
     return (xView, yView)
 
 def calcGroundFootprintDimensions (camera, altitude_m):
+    """
+    Function: calcGroundFootprintDimension
+    Arguments:
+        camera: Camera object
+        altitude_m: Altitude of camera in meters
+    Purpose: 
+        Calculate the ground footprint of an aerial camera, 
+        such as one mounted on an aerial vehicle. 
+        Finds distances relative to the camera position, but not the actual position
+    """
     FoV = calcFieldOfView (camera)
     distFront = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) + 0.5 * FoV[0])) 
     distBehind = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) - 0.5 * FoV[0]))
@@ -79,6 +98,13 @@ def calcGroundFootprintDimensions (camera, altitude_m):
     return (distFront, distBehind, distLeft, distRight)
 
 def calcGroundFootprint (camera, altitude_m, position):
+    """
+    Function: calcGroundFootprint
+    Arguments: 
+        camera: Camera object
+        altitude_m: Altitude of camera in meters
+        position: ground (x, y) coordinates of camera
+    """
     (distFront, distBehind, distLeft, distRight) = calcGroundFootprintDimensions (camera, altitude_m)
     posLowerLeft = (position[0] + distLeft, position[1] + distBehind)
     posLowerRight = (position[0] + distRight, position[1] + distBehind)
@@ -89,23 +115,30 @@ def calcGroundFootprint (camera, altitude_m, position):
 def calcTimeToStayInPosition(centroidPath, footprint):
     polygon = Polygon (footprint)
     cPath = centroidPath.copy ()
-    time_s = 1
+    # First centroid assumed to be in footprint: increment by update interval
+    time_s = deltaTT_s
     centroidContained = True
     while (centroidContained == True and len (cPath) > 0):
         nextCentroid = cPath.pop (0)
         point = Point (nextCentroid)
         # Check if the next centroid is in footprint
         if (polygon.contains (point)):
-            time_s = time_s + 1 
+            # Since it is, increment by update interval
+            time_s = time_s + deltaTT_s
         else:
             centroidContained = False 
     return time_s
     
 
 def get_angle_2D (a, b):
-# Calculate the angle between two vectors in (R^2)
-# a - a 2D numeric array
-# b - a 2D numeric array
+    """
+    Function: get_angle_2D
+    Arguments:
+        a: 2D numeric array 
+        b: 2D numeric array
+    Purpose:
+    Calculate the angle between two vectors in (R^2)
+    """
     x = nm.dot(a, b) / nm.linalg.norm(a) / nm.linalg.norm(b)
     x = 1.0 if x > 1.0 else x
     x = -1.0 if x < -1.0 else x
@@ -113,13 +146,18 @@ def get_angle_2D (a, b):
     return x
 
 def get_coords_in_radius(t, s, r):
-# Calculate the x,y coordinates needed
-# to set a waypoint such that a point
-# will go to the nearest point to a target,
-# but at a radius r from it.
-# t - target, a 2D numeric array
-# s - current location, a 2D numeric array
-# r - radius, a number
+    """
+    Function: get_coords_in_radius
+    Purpose:
+        Calculate the x,y coordinates needed
+        to set a waypoint such that a point          
+        will go to the nearest point to a target
+        but at a radius r from it.
+    Arguments:
+        t: target, a 2D numeric array
+        s: current location, a 2D numeric array
+        r: radius, a number
+    """
     theta = get_angle_2D (s, t)
     w = nm.subtract (s,t)
     w_norm = nm.linalg.norm (w)
@@ -129,6 +167,7 @@ def get_coords_in_radius(t, s, r):
 def rotatePoint(centerPoint,point,angle):
     """Rotates a point around another centerPoint. Angle is in degrees.
     Rotation is counter-clockwise"""
+    # Source: https://gist.github.com/somada141/d81a05f172bb2df26a2c
     angle = angle
     temp_point = point[0]-centerPoint[0] , point[1]-centerPoint[1]
     temp_point = ( temp_point[0]*math.cos(angle)-temp_point[1]*math.sin(angle) , temp_point[0]*math.sin(angle)+temp_point[1]*math.cos(angle))
@@ -138,6 +177,7 @@ def rotatePoint(centerPoint,point,angle):
 def rotatePolygon(polygon,theta):
     """Rotates the given polygon which consists of corners represented as (x,y),
     around the ORIGIN, clock-wise, theta degrees"""
+    # Source: https://gist.github.com/somada141/d81a05f172bb2df26a2c
     theta = math.radians(theta)
     rotatedPolygon = []
     for corner in polygon :
@@ -169,7 +209,6 @@ def calcSpeed (targets):
         Estimate a targets speed as (distance in time interval) / (time interval)
     """
     for t in targets:
-        print (t)
         t['speed'] = (((t['position'][0] - t['position_prev'][0]) ** 2 + (t['position'][1] - t['position_prev'][1]) ** 2 ) ** (.5)) / (deltaT_s)
 
 def predictPath (targets):
@@ -207,7 +246,7 @@ def predictPath (targets):
         if (t['speed'] != 0):
             cnt_time = 0
             while (w is not None): # and cnt_time < 30): # While waypoints still exist, continue building path prediction
-                cnt_time = cnt_time + 0.2
+                cnt_time = cnt_time + 2
                 i = (t['speed'] * deltaTT_s, 0)
                 l = nm.subtract (p, w)
                 tt = nm.arctan2(l[1], l[0])
@@ -372,8 +411,8 @@ def main ():
     timeRun = 0
     while (predict == True):
         
-        # Skip updates based of loop, since
-        numSkip = timeRun
+        # Skip updates based off of loop, since
+        numSkip = math.ceil (timeRun / deltaT_s)
         for i in range (numSkip):
             if(predict == True):
                  predict = updatePositions (targets)
@@ -396,13 +435,11 @@ def main ():
         # use targets' path predictions to predict centroid path
         centroid_path = calcCentroidPath (targets, paths)
         
-        ####### Plot: Current path prediction
-     
         ####### Plot: Predicted centroid paths
         #pl.plot(*zip(*paths['susan']), 'go')
         #pl.plot(*zip(*paths['anton']), 'bo')
         #pl.plot(*zip(*paths['django']), 'ro')
-        pl.plot(*zip(*centroid_path['path']), 'o')
+        pl.plot(*zip(*centroid_path['path']), '.')
         ####### End Plot
 
         numRuns = numRuns + 1
@@ -451,6 +488,13 @@ def main ():
                      rotatePoint (w, footprint[3], theta)]
         # How long to stay in position
         timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], footprint)
+        
+        # Logging:
+        # Build CSV row of footprint information
+        CSVrow = [str (f[0]) + "," + str (f[1]) + "," for f in footprint]
+        CSVrow.append (str (timeToStayAtWaypoint))
+        CSVrow = ''.join (CSVrow)
+        print (CSVrow)
  
         ####### Plot: Footprint
         # Source = http://matplotlib.org/users/path_tutorial.html
