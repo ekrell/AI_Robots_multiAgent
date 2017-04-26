@@ -6,18 +6,18 @@ File: predictPath.py
 This script prototypes a multi-target path prediction algorithm.
 The goal is to predict the path of a centroid as multiple targets follow waypoints.
 Targets are allowed to differ in speed and waypoints, but are expected to be following
-waypoints close together and at similar speeds because the targets are moving as a group 
-toward the same or clustered goals. 
+waypoints close together and at similar speeds because the targets are moving as a group
+toward the same or clustered goals.
 
 At the moment, the data is hard-coded into this script.
-In the future, the data will be input from files to test the algorithm in diverse situations. 
+In the future, the data will be input from files to test the algorithm in diverse situations.
 
 The hard-coded scenario is this:
-3 targets are initially within 11 units of each other. 
+3 targets are initially within 11 units of each other.
 Each has own set of waypoints. The final waypoints are within 8 units of each other.
 Each target has a number of periodic 'observations' that are not always aligned with the next waypoint
 (to represent some variability such as environmental conditions or nonholonomic motion).
-""" 
+"""
 import math
 import numpy as nm
 import pylab as pl
@@ -42,16 +42,16 @@ def updatePositions (targets):
     Purpose:
         Update the target's current position while also
         setting the target's previous position and updates
-        the list of the target's future position by consuming the head. 
+        the list of the target's future position by consuming the head.
         If the target as reached the current waypoint, set a new waypoint
-        and consume the previous. 
+        and consume the previous.
     """
     for t in targets:
         # The current position is now the previous position
         t['position_prev'] = t['position']
         # Get current waypoint
 
-        w = t['waypoints'][0]         
+        w = t['waypoints'][0]
         if (len (t['observed_path']) > 0):
             t['position'] = t['observed_path'].pop (0)
             if (t['position'] == 'A'):
@@ -75,11 +75,12 @@ def calcFieldOfView (camera):
     Arguments:
         camera: Camera object
     Purpose:
-        Calculate the field of view (FoV) for a camera 
+        Calculate the field of view (FoV) for a camera
         given the x and y sensor dimensions and the focal length
     """
     xView = (2 * math.atan (camera['xSensor_mm'] / (2 * camera['focallen_mm'])))
     yView = (2 * math.atan (camera['ySensor_mm'] / (2 * camera['focallen_mm'])))
+
     return (xView, yView)
 
 def calcGroundFootprintDimensions (camera, altitude_m):
@@ -88,22 +89,27 @@ def calcGroundFootprintDimensions (camera, altitude_m):
     Arguments:
         camera: Camera object
         altitude_m: Altitude of camera in meters
-    Purpose: 
-        Calculate the ground footprint of an aerial camera, 
-        such as one mounted on an aerial vehicle. 
+    Purpose:
+        Calculate the ground footprint of an aerial camera,
+        such as one mounted on an aerial vehicle.
         Finds distances relative to the camera position, but not the actual position
     """
     FoV = calcFieldOfView (camera)
-    distFront = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) + 0.5 * FoV[0])) 
+    # if camera['tiltAngle_deg'] > 0:
+    #      camera['xGimbal_deg'] = camera['xGimbal_deg']+ math.tan(camera['tiltAngle_deg']+94)
+    #      camera['yGimbal_deg'] = camera['yGimbal_deg']+ math.tan(camera['tiltAngle_deg']+94)
+
+    distFront  = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) + 0.5 * FoV[0]))
     distBehind = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) - 0.5 * FoV[0]))
-    distLeft = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) - 0.5 * FoV[1]))
-    distRight = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) + 0.5 * FoV[1]))
+    distLeft   = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) - 0.5 * FoV[1]))
+    distRight  = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) + nm.radians(camera['tiltAngle_deg'])/100 + 0.5 * FoV[1]))
     return (distFront, distBehind, distLeft, distRight)
+
 
 def calcGroundFootprint (camera, altitude_m, position):
     """
     Function: calcGroundFootprint
-    Arguments: 
+    Arguments:
         camera: Camera object
         altitude_m: Altitude of camera in meters
         position: ground (x, y) coordinates of camera
@@ -129,15 +135,15 @@ def calcTimeToStayInPosition(centroidPath, footprint):
             # Since it is, increment by update interval
             time_s = time_s + deltaTT_s
         else:
-            centroidContained = False 
+            centroidContained = False
     return time_s
-    
+
 
 def get_angle_2D (a, b):
     """
     Function: get_angle_2D
     Arguments:
-        a: 2D numeric array 
+        a: 2D numeric array
         b: 2D numeric array
     Purpose:
     Calculate the angle between two vectors in (R^2)
@@ -153,7 +159,7 @@ def get_coords_in_radius(t, s, r):
     Function: get_coords_in_radius
     Purpose:
         Calculate the x,y coordinates needed
-        to set a waypoint such that a point          
+        to set a waypoint such that a point
         will go to the nearest point to a target
         but at a radius r from it.
     Arguments:
@@ -195,7 +201,7 @@ def calcCentroid (targets):
         targets: List of 'Target' structs
     Purpose:
         Returns the center point of the current positions in all targets
-    Source: 
+    Source:
         http://stackoverflow.com/questions/23020659/fastest-way-to-calculate-the-centroid-of-a-set-of-coordinate-tuples-in-python-wi
     """
     points = [(t['position'][0], t['position'][1]) for t in targets]
@@ -222,15 +228,15 @@ def predictPath (targets):
     Purpose:
         Determines where it believes that the the targets will be after every time interval deltaTT_s
         by calculating a vector in each interval whose magnitude is equal to distance traveled at estimated speed
-        and whose angle is aligned with the current waypoint. 
+        and whose angle is aligned with the current waypoint.
         Each interval's vector is added to current vector such that the cummulative vector sum is the estimated path.
-        This is done for each Target in targets. 
-    Returns: 
+        This is done for each Target in targets.
+    Returns:
         A list whose entries are a list of the estimated interval positions (predicted path) for each target
     """
 
     # Init empty paths, where each path is accessable by target's name
-    paths = dict.fromkeys( [t['name'] for t in targets] )    
+    paths = dict.fromkeys( [t['name'] for t in targets] )
     for t in targets:
         paths['time'] = t['position'][0]  # ! Is written over each time, but matters little since all ~same time
 
@@ -255,11 +261,11 @@ def predictPath (targets):
                 tt = nm.arctan2(l[1], l[0])
                 if (tt < 0):
                     tt = tt + 2 * math.pi
-                i = rotatePoint ((0,0), i, tt) 
+                i = rotatePoint ((0,0), i, tt)
 
                 # Add interval vector to current position for next position
                 coords = nm.subtract (p, i)
-                old_p = p 
+                old_p = p
                 p = (coords[0], coords[1])
                 # Add new postion to predicted path
                 paths[t['name']].append (p)
@@ -303,10 +309,10 @@ def calcCentroidPath (targets, paths):
         centroid = sum (x) / l, sum (y) / l
         # Add centroid to path
         centroid_path.append (centroid)
-        # Assign centroid path time 
+        # Assign centroid path time
         time = paths['time']
     return {'path':centroid_path, 'time':time}
-       
+
 
 def main ():
     # Parse arguments
@@ -315,12 +321,12 @@ def main ():
     parser.add_argument("-w", "--waypoint_dir", help = "directory containing waypoint data")
     parser.add_argument("-p", "--path_dir", help = "directory containing path data")
     args = parser.parse_args()
-    
+
     if (args.names is None):
         print ("Must supply targets with -n")
         exit (0)
     target_names = args.names.split (",")
-    
+
     # Parse targets, waypoints, initial positions
     targets = [{'name':x, 'position_prev':(None, None), 'position':(None, None), 'source':(None, None), 'speed':None} for x in target_names]
     for t in targets:
@@ -330,15 +336,15 @@ def main ():
             waypoints = f.readlines ()
         waypoints = [x.strip () for x in waypoints]
         t['waypoints'] = [(float (x.split(',')[0]), float (x.split(',')[1])) for x in waypoints]
-    
+
         # Read start position
         fh = args.waypoint_dir + t['name'] + ".start"
         with open (fh) as f:
             start = f.readlines ()[0].strip ()
-        t['position'] = (float (start.split(',')[0]), float (start.split(',')[1])) 
+        t['position'] = (float (start.split(',')[0]), float (start.split(',')[1]))
         t['source'] = t['position']
-    
-    
+
+
     # Parse target's observed path points
     for t in targets:
         fh = args.path_dir + t['name'] + "_2s.path"
@@ -356,27 +362,27 @@ def main ():
                     y = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_y[^,}]*', line)[0])[0]
                     t['observed_path'].append ( (float (x), float (y)) )
 
-    
+
     # Init Quadcopter
-    quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0, 'yGimbal_deg':20}}
+    quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0.00, 'yGimbal_deg':20.00, 'tiltAngle_deg':50}}
     quad['altitude'] = 50
     quad['position'] = (-60, 60)
     quad['heading'] = 0
- 
+
     # Init previous positions to null
     for t in targets:
         t['position_prev'] = (None, None)
 
     # Init speeds to None
-    for t in targets: 
+    for t in targets:
         t['speed'] = None
-    
+
     # Init centroid
     centroid = { 'position_prev': (None, None), 'position': calcCentroid (targets), 'speed': None, 'direction': (None, None) }
-    
+
     # Init 'predict' as true, the flag for loop continuation
     predict = True
-    
+
     ####### Plot: Waypoints & initial positions
     pl.title ('Target Tracking')
     cnt = 0
@@ -394,7 +400,7 @@ def main ():
     pl.legend(loc='lower left', shadow=True)
     pl.savefig ('predictPath__waypoints.pdf')
     ####### End Plot
-    
+
     ####### Plot: Observed target positions
     cnt = 0
     labels = ['Target 1: observed', 'Target 2: observed', 'Target 3: observed']
@@ -413,17 +419,17 @@ def main ():
     numRuns = 0
     timeRun = 0
     while (predict == True):
-        
+
         # Skip updates based off of loop, since
         numSkip = math.ceil (timeRun / deltaT_s)
         for i in range (numSkip):
             if(predict == True):
                  predict = updatePositions (targets)
-        
+
         #-------------------------#
         # Phase 0: Estimate Speed #
         #-------------------------#
-        
+
         # Estimate target speeds
         calcSpeed (targets)
         # Calculate centroid using current observations
@@ -437,7 +443,7 @@ def main ():
         paths = predictPath (targets)
         # use targets' path predictions to predict centroid path
         centroid_path = calcCentroidPath (targets, paths)
-        
+
         ####### Plot: Predicted centroid paths
         #pl.plot(*zip(*paths['susan']), 'go')
         #pl.plot(*zip(*paths['anton']), 'bo')
@@ -456,7 +462,7 @@ def main ():
         c = (centroid['position'][0], centroid['position'][1])
         c = quad['position']
         lowDist = 100
-        for t in targets: 
+        for t in targets:
             p = t['position']
             distFromCentroid = ((p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 ) ** (.5)
             if (distFromCentroid < lowDist):
@@ -464,8 +470,8 @@ def main ():
                 maxTarget = t
         standoffDist = 1
         #print (lowDist, maxTarget['name'])
-         
-        
+
+
         # Set waypoint as first predicted centroid
         if (len (centroid_path['path']) > 1):
             nextCentroid = centroid_path['path'][1]
@@ -483,8 +489,8 @@ def main ():
         wayCenter = ( sum (x) / l, sum (y) / l )
         futureCentroid = wayCenter
 
-        
-     
+
+
         # Go to waypoint
         quad['waypoint'] = get_coords_in_radius (maxTarget['position'], quad['position'], standoffDist)
         quad['position_prev'] = quad['position']
@@ -502,20 +508,20 @@ def main ():
 
         # Get current ground footprint
         footprint =  calcGroundFootprint (quad['camera'], quad['altitude'], quad['position'])
-        footprint = [rotatePoint (w, footprint[0], theta), 
-                     rotatePoint (w, footprint[1], theta), 
+        footprint = [rotatePoint (w, footprint[0], theta),
+                     rotatePoint (w, footprint[1], theta),
                      rotatePoint (w, footprint[2], theta),
                      rotatePoint (w, footprint[3], theta)]
         # How long to stay in position
         timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], footprint)
-        
+
         # Logging:
         # Build CSV row of footprint information
         CSVrow = [str (f[0]) + "," + str (f[1]) + "," for f in footprint]
         CSVrow.append (str (timeToStayAtWaypoint))
         CSVrow = ''.join (CSVrow)
         print (CSVrow)
- 
+
         ####### Plot: Footprint
         # Source = http://matplotlib.org/users/path_tutorial.html
         verts = footprint
@@ -529,7 +535,9 @@ def main ():
         path = Path (verts, codes)
         patch = patches.PathPatch (path, facecolor = 'orange', lw = 2)
         pl.gca().add_patch (patch)
-        #######
+        #------------------------#
+        # Phase 3 : Tracking  #
+        #------------------------#
 
         timeRun = timeToStayAtWaypoint
     pl.savefig ('predictPath__predicted.pdf')
