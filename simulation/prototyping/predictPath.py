@@ -101,8 +101,8 @@ def calcGroundFootprintDimensions (camera, altitude_m):
 
     distFront  = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) + 0.5 * FoV[0]))
     distBehind = altitude_m * (math.tan(nm.radians (camera['xGimbal_deg']) - 0.5 * FoV[0]))
-    distLeft   = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) - 0.5 * FoV[1]))
-    distRight  = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) + nm.radians(camera['tiltAngle_deg'])/100 + 0.5 * FoV[1]))
+    distLeft   = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) + nm.radians(camera['tiltAngle_deg'])/10 -0.5 * FoV[1]))
+    distRight  = altitude_m * (math.tan(nm.radians (camera['yGimbal_deg']) + nm.radians(camera['tiltAngle_deg'])/10 + 0.5 * FoV[1]))
     return (distFront, distBehind, distLeft, distRight)
 
 
@@ -364,7 +364,7 @@ def main ():
 
 
     # Init Quadcopter
-    quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0.00, 'yGimbal_deg':20.00, 'tiltAngle_deg':50}}
+    quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0.00, 'yGimbal_deg':20.00, 'tiltAngle_deg':25}}
     quad['altitude'] = 50
     quad['position'] = (-60, 60)
     quad['heading'] = 0
