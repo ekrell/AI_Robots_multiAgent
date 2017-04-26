@@ -42,7 +42,7 @@ def main ():
 
     # Parse target's observed path points
     for t in targets:
-        fh = args.path_dir + t['name'] + "_2s.path"
+        fh = args.path_dir + t['name'] + ".path"
         t['observed_path'] = [t['source']]
         with open (fh) as f:
             path = f.readlines ()
@@ -67,7 +67,11 @@ def main ():
             coverageData.append (CSVrow)
     # Init 
     timeEllapsed_s = 0
-    observationTimeInterval_s = 2
+
+    # Init counters for how many times the entire group is in view
+    numIntervalsContainedGroup = 0
+    numIntervalsMissingGroup = 0 # While this should be (total - contained), good to make sure they sum correctly
+
 
     # Main Evaluation Loop
     for c in coverageData:
@@ -79,6 +83,7 @@ def main ():
         
         # Get duration of footprint
         footprintDuration = int (c[8])
+        timeEllapsed_s = timeEllapsed_s + footprintDuration
         
         # For each target, see how long spent in footprint
         numCheck = footprintDuration
@@ -107,10 +112,6 @@ def main ():
             percentContained = numIntervalsContained / footprintDuration
             print (t['isContainedList'])
         
-        # Init counters for how many times the entire group is in view
-        numIntervalsContainedGroup = 0
-        numIntervalsMissingGroup = 0 # While this should be (total - contained), good to make sure they sum correctly
-
         # Compare containment status for each time
         for i in range (0,numCheck):
             allContained = True
@@ -122,9 +123,9 @@ def main ():
             else:
                 numIntervalsMissingGroup = numIntervalsMissingGroup + 1
 
-        # Calculate percentage kept in view
-        percentContainedGroup = numIntervalsContainedGroup / numCheck
-        print (percentContainedGroup)
+    # Calculate percentage kept in view
+    percentContainedGroup = numIntervalsContainedGroup / timeEllapsed_s
+    print (percentContainedGroup, len (coverageData))
 
 
 if __name__ == "__main__":
