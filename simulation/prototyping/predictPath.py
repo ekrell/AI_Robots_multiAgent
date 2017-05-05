@@ -31,7 +31,9 @@ from shapely.geometry.polygon import Polygon
 # Time between updates (s)
 deltaT_s = 2    # Interval between target's position messages
 deltaTT_s = 2   # Interval between estimated positions
-maxWait = 25
+maxWait = 10
+useWaypoints = False
+
 
 #### Function Definitions
 
@@ -47,6 +49,7 @@ def updatePositions (targets):
         If the target as reached the current waypoint, set a new waypoint
         and consume the previous. 
     """
+    done = 1
     for t in targets:
         # The current position is now the previous position
         t['position_prev'] = t['position']
@@ -65,10 +68,13 @@ def updatePositions (targets):
             #t['position'] = t['waypoints'][0]
             #t['position_prev'] = t['position']
         else: # Have lost connection or other critical error
-            t['position'] = t['waypoints'][0]
-            t['position_prev'] = t['position']
-            return False
-    return True
+        #    t['position'] = t['waypoints'][0]
+        #    t['position_prev'] = t['position']
+             done = done + 1
+    if (done == len (targets)):
+        return False
+    else:
+        return True
 
 def calcFieldOfView (camera):
     """
@@ -342,7 +348,7 @@ def main ():
     
     # Parse target's observed path points
     for t in targets:
-        fh = args.path_dir + t['name'] + ".path"
+        fh = args.path_dir + t['name'] + "_2s.path"
         t['observed_path'] = [t['source']]
         with open (fh) as f:
             path = f.readlines ()
@@ -361,6 +367,7 @@ def main ():
     # Init Quadcopter
     quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0, 'yGimbal_deg':20}}
     quad['altitude'] = 50
+    quad['position_prev'] = (-62, 60)
     quad['position'] = (-60, 60)
     quad['heading'] = 0
  
@@ -416,7 +423,7 @@ def main ():
 
     prev = None
  
-    footDist = 1
+    footDist = 0
  
     while (predict == True):
         
@@ -426,7 +433,7 @@ def main ():
         # Skip updates based off of loop, since
         numSkip = timeRun #/ deltaT_s)
         for i in range (numSkip):
-            if(predict == True):
+            if (predict == True):
                  predict = updatePositions (targets)
         
         #-------------------------#
@@ -463,19 +470,22 @@ def main ():
 
         # Determine standoff distance
         points = [(t['position'][0], t['position'][1]) for t in targets]
-        c = (centroid['position'][0], centroid['position'][1])
+        #c = (centroid['position'][0], centroid['position'][1])
         c = quad['position']
-        lowDist = 100
+        lowDist = 100 # <---- embarrassing.. 
+        maxDist = 0
         for t in targets: 
             p = t['position']
             distFromCentroid = ((p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 ) ** (.5)
             if (distFromCentroid < lowDist):
                 lowDist = distFromCentroid
                 maxTarget = t
-        standoffDist = .5
-         
-        if (lowDist < footDist):
-            print ("ya")
+            if (distFromCentroid > maxDist):
+                maxDist = distFromCentroid
+                realMaxTarget = t
+        standoffDist = 1
+        
+        if (maxDist < footDist - 1 ):
             reposition = False
 
         pl.plot ([maxTarget['position'][0]], [maxTarget['position'][1]], marker = 'x')
@@ -497,17 +507,21 @@ def main ():
         wayCenter = ( sum (x) / l, sum (y) / l )
         futureCentroid = wayCenter
 
+## 
+        if (useWaypoints == False):
+            futureCentroid = nextCentroid
+
         # Go to waypoint
+        if (maxTarget['position'][0] == quad['position_prev'][0] and maxTarget['position'][1] == quad['position_prev'][1]):
+            reposition = False 
         if (reposition):
-            if (prev is not None):
-                quad['waypoint'] = get_coords_in_radius (maxTarget['position'], prev, standoffDist)
-            else: 
-                quad['waypoint'] = get_coords_in_radius (maxTarget['position'], quad['position'], standoffDist)
+                quad['waypoint'] = get_coords_in_radius (maxTarget['position'], quad['position_prev'], standoffDist)
+            #else: 
+            #    quad['waypoint'] = get_coords_in_radius (maxTarget['position'], quad['position'], standoffDist)
         else:
             quad['waypoint'] = quad['position']
         quad['position_prev'] = quad['position']
         quad['position'] = quad['waypoint']
-        prev = maxTarget['position']
 
         # Set heading angle toward the waypoint
         if (reposition):
@@ -527,10 +541,14 @@ def main ():
                      rotatePoint (w, footprint[2], theta),
                      rotatePoint (w, footprint[3], theta)]
         footDist = calcGroundFootprintDimensions (quad['camera'], quad['altitude'])[0]
-        print (footDist)
         # How long to stay in position
         timeToStayAtWaypoint = calcTimeToStayInPosition (centroid_path['path'], footprint)
         timeToStayAtWaypoint = min (timeToStayAtWaypoint, maxWait)
+        timeToStatAtWaypoint = max (timeToStayAtWaypoint, 5)
+        if (useWaypoints == False):
+            timeToStayAtWaypoint = 10
+        else:
+            timeToStayAtWaypoint = 10
         
         # Logging:
         # Build CSV row of footprint information
@@ -556,8 +574,6 @@ def main ():
 
         timeRun = timeToStayAtWaypoint
     pl.savefig ('predictPath__predicted.pdf')
-
-
 
 
 if __name__ == "__main__":
