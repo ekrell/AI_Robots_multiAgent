@@ -42,20 +42,35 @@ def main ():
 
     # Parse target's observed path points
     for t in targets:
-        fh = args.path_dir + t['name'] + "_2s.path"
+        fh = args.path_dir + t['name'] + ".path"
         t['observed_path'] = [t['source']]
+        secs_prev = -1
         with open (fh) as f:
             path = f.readlines ()
             for line in path:
                 line = line.rstrip()
-                if (line == "Arrived!"):
+                if (line[0] == '['):
+                    #ignore
+                    True
+                elif (line == "Arrived!"):
                     t['observed_path'].append ('A')
                 else:
                     time = re.findall('time[^,}]*', line)[0]
                     time = re.findall('[0-9]*:[0-9]*:[0-9]*', time)[0]
-                    x = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_x[^,}]*', line)[0])[0]
-                    y = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_y[^,}]*', line)[0])[0]
-                    t['observed_path'].append ( (float (x), float (y), time) )
+
+                    # ! Only add uniq, even times
+                    secs = time.split(":")[2]
+                    if (int (secs) % 2 != 0):
+                        #ignore
+                        True
+                    elif (secs == secs_prev):
+                        #ignore
+                        True
+                    else:
+                        x = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_x[^,}]*', line)[0])[0]
+                        y = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_y[^,}]*', line)[0])[0]
+                        t['observed_path'].append ( (float (x), float (y), time) )
+                    secs_prev = secs
 
     # Parse coverage file
     coverageData = []
@@ -74,14 +89,35 @@ def main ():
 
 
     # Main Evaluation Loop
+    numRepositions = 0
+    footprint_prev = None
     for c in coverageData:
         # Get footprint
         footprint = c[0:8]
         footprint = [float (f) for f in footprint]
-        print (footprint)
+        #print (footprint)
+
+        if (footprint_prev is not None):
+            same = footprint_prev[0] - footprint[0]
+            same = same + footprint_prev[0] - footprint[0]
+            same = same + footprint_prev[1] - footprint[1]
+            same = same + footprint_prev[2] - footprint[2]
+            same = same + footprint_prev[3] - footprint[3]
+            same = same + footprint_prev[4] - footprint[4]
+            same = same + footprint_prev[5] - footprint[5]
+            same = same + footprint_prev[6] - footprint[6]
+            same = same + footprint_prev[7] - footprint[7]
+
+            if (same != 0):
+                numRepositions = numRepositions + 1
+        footprint_prev = footprint
+
+
         footprint = [(footprint[0], footprint[1]), (footprint[2], footprint[3]), (footprint[4], footprint[5]), (footprint[6], footprint[7])]
         footprint = Polygon (footprint)
         
+
+
         # Get duration of footprint
         footprintDuration = int (c[8])
         timeEllapsed_s = timeEllapsed_s + footprintDuration
@@ -111,7 +147,7 @@ def main ():
                     numIntervalsMissing = numIntervalsMissing + 1
                     t['isContainedList'].append (0)
             percentContained = numIntervalsContained / footprintDuration
-            print (t['isContainedList'])
+            #print (t['isContainedList'])
         
         # Compare containment status for each time
         for i in range (0,numCheck):
@@ -126,7 +162,7 @@ def main ():
 
     # Calculate percentage kept in view
     percentContainedGroup = numIntervalsContainedGroup / timeEllapsed_s
-    print (percentContainedGroup, len (coverageData))
+    print (percentContainedGroup,",",numRepositions, sep = '')
 
 
 if __name__ == "__main__":

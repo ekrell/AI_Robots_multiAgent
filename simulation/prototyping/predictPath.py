@@ -32,7 +32,7 @@ from shapely.geometry.polygon import Polygon
 deltaT_s = 2    # Interval between target's position messages
 deltaTT_s = 2   # Interval between estimated positions
 maxWait = 10
-useWaypoints = False
+useWaypoints = True
 
 
 #### Function Definitions
@@ -321,12 +321,18 @@ def main ():
     parser.add_argument("-n", "--names", help = "comma-separated list of target names")
     parser.add_argument("-w", "--waypoint_dir", help = "directory containing waypoint data")
     parser.add_argument("-p", "--path_dir", help = "directory containing path data")
+    parser.add_argument("-d", "--disable_waypoints", help = "disable using waypoints for following")
     args = parser.parse_args()
     
     if (args.names is None):
         print ("Must supply targets with -n")
         exit (0)
     target_names = args.names.split (",")
+
+    if (args.disable_waypoints is not None):
+        useWaypoints = False
+    else:
+        useWaypoints = True
     
     # Parse targets, waypoints, initial positions
     targets = [{'name':x, 'position_prev':(None, None), 'position':(None, None), 'source':(None, None), 'speed':None} for x in target_names]
@@ -348,25 +354,39 @@ def main ():
     
     # Parse target's observed path points
     for t in targets:
-        fh = args.path_dir + t['name'] + "_2s.path"
+        fh = args.path_dir + t['name'] + ".path"
         t['observed_path'] = [t['source']]
+        secs_prev = -1
         with open (fh) as f:
             path = f.readlines ()
             for line in path:
                 line = line.rstrip()
-                if (line == "Arrived!"):
+                if (line[0] == '['):
+                    # Ignore
+                    True
+                elif (line == "Arrived!"):
                     t['observed_path'].append ('A')
                 else:
                     time = re.findall('time[^,}]*', line)[0]
                     time = re.findall('[0-9]*:[0-9]*:[0-9]*', time)[0]
-                    x = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_x[^,}]*', line)[0])[0]
-                    y = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_y[^,}]*', line)[0])[0]
-                    t['observed_path'].append ( (float (x), float (y)) )
+                    # ! Only add uniq, even times
+                    secs = time.split(":")[2]
+                    if (int (secs) % 2 != 0):
+                        # Ignore
+                        True
+                    elif (secs == secs_prev):
+                        # Ignore
+                        True
+                    else:
+                        x = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_x[^,}]*', line)[0])[0]
+                        y = re.findall ('[-0-9]*\.[0-9]*', re.findall('pos_y[^,}]*', line)[0])[0]
+                        t['observed_path'].append ( (float (x), float (y)) )
+                    secs_prev = secs
 
     
     # Init Quadcopter
     quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0, 'yGimbal_deg':20}}
-    quad['altitude'] = 50
+    quad['altitude'] = 10
     quad['position_prev'] = (-62, 60)
     quad['position'] = (-60, 60)
     quad['heading'] = 0
@@ -458,7 +478,7 @@ def main ():
         #pl.plot(*zip(*paths['susan']), 'go')
         #pl.plot(*zip(*paths['anton']), 'bo')
         #pl.plot(*zip(*paths['django']), 'ro')
-        pl.plot(*zip(*centroid_path['path']), '.')
+        #pl.plot(*zip(*centroid_path['path']), '.')
         ####### End Plot
 
         numRuns = numRuns + 1
