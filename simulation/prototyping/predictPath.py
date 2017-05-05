@@ -31,7 +31,7 @@ from shapely.geometry.polygon import Polygon
 # Time between updates (s)
 deltaT_s = 2    # Interval between target's position messages
 deltaTT_s = 2   # Interval between estimated positions
-maxWait = 10
+maxWait = 5
 useWaypoints = True
 
 
@@ -566,9 +566,9 @@ def main ():
         timeToStayAtWaypoint = min (timeToStayAtWaypoint, maxWait)
         timeToStatAtWaypoint = max (timeToStayAtWaypoint, 5)
         if (useWaypoints == False):
-            timeToStayAtWaypoint = 10
+            timeToStayAtWaypoint = 5
         else:
-            timeToStayAtWaypoint = 10
+            timeToStayAtWaypoint = 5
         
         # Logging:
         # Build CSV row of footprint information
