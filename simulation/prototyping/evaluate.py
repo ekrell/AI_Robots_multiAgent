@@ -42,7 +42,7 @@ def main ():
 
     # Parse target's observed path points
     for t in targets:
-        fh = args.path_dir + t['name'] + ".path"
+        fh = args.path_dir + t['name'] + "_2s.path"
         t['observed_path'] = [t['source']]
         with open (fh) as f:
             path = f.readlines ()
@@ -78,6 +78,7 @@ def main ():
         # Get footprint
         footprint = c[0:8]
         footprint = [float (f) for f in footprint]
+        print (footprint)
         footprint = [(footprint[0], footprint[1]), (footprint[2], footprint[3]), (footprint[4], footprint[5]), (footprint[6], footprint[7])]
         footprint = Polygon (footprint)
         
