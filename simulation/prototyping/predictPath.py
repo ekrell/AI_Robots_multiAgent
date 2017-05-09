@@ -386,7 +386,7 @@ def main ():
     
     # Init Quadcopter
     quad = {'camera': {'xSensor_mm':6.16, 'ySensor_mm':4.62, 'focallen_mm':3.61, 'xGimbal_deg':0, 'yGimbal_deg':20}}
-    quad['altitude'] = 10
+    quad['altitude'] = 75
     quad['position_prev'] = (-62, 60)
     quad['position'] = (-60, 60)
     quad['heading'] = 0
@@ -566,9 +566,9 @@ def main ():
         timeToStayAtWaypoint = min (timeToStayAtWaypoint, maxWait)
         timeToStatAtWaypoint = max (timeToStayAtWaypoint, 5)
         if (useWaypoints == False):
-            timeToStayAtWaypoint = 5
+            timeToStayAtWaypoint = 10
         else:
-            timeToStayAtWaypoint = 5
+            timeToStayAtWaypoint = 10
         
         # Logging:
         # Build CSV row of footprint information
