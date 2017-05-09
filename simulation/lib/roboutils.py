@@ -1,6 +1,7 @@
 
 import pymorse
 import robomath as rm
+import datetime
 import time
 
 def ping(robot):
@@ -24,7 +25,7 @@ def get_orientation(robot):
 def get_status(robot):
     destination = robot['destination']
     location =  get_position(robot)
-    status = { 'pos_x':location['x'], 'pos_y':location['y'], 'dest_x':destination['x'], 'dest_y':destination['y'] }
+    status = { 'time':'{:%H:%M:%S}'.format(datetime.datetime.now()),'pos_x':location['x'], 'pos_y':location['y'], 'dest_x':destination['x'], 'dest_y':destination['y'] }
     return status
 
 def cancel_target(robot):

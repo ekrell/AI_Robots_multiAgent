@@ -1,0 +1,15 @@
+ScenarioID,Targets,NumTargets,ProportionInView,NumRepositions,NumWaypoints,TargetMaxSpread,TargetMeanSpread
+1,SusanDjangoAnton,3,1.0,5,4, ,
+1,SusanDjango,2,1.0,5,4, ,
+1,SusanAnton,2,1.0,5,4, ,
+1,DjangoAnton,2,1.0,5,4, ,
+2,SusanDjangoAnton,3,1.0,4,2, ,
+2,SusanDjango,2,1.0,4,2, ,
+2,SusanAnton,2,1.0,4,2, ,
+2,AntonDjango,2,0.848,3,2, ,
+3,SusanDjangoAnton,3,1.0,3,3, ,
+3,SusanDjango,2,1.0,2,3, ,
+3,SusanAnton,2,1.0,3,3, ,
+3,DjangoAnton,2,1,1.0,2,3, ,
+
+
