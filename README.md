@@ -1,4 +1,16 @@
-## AI Robots: multi-agent team
+**Note to instructors**
+There is a zip file on Piazza with the version at time of submission.
+I will be doing a complete overhaul of much of the code very soon, 
+so when you read this the live version might make the project look better than it was. 
+
+Also, the two design documents are:
+
+https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/InterfaceDiagram.png
+
+https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/classDiagram.png
+
+
+## AI Robots: P6 Multi-Agent Coordination
 
 The purpose of this project is to coordinate a hetergeneous team of unmanned vehicles for
 search and rescue applicatons in a water environment. The specfic (initial) goal is for a
@@ -8,28 +20,46 @@ The target USV platform is the EMILY (emilyrobot.com). To differentiate, wheneve
 in the simulator in place of the USV, the robot is called MARISA.
 
 ### Developers
----------NAME--------------------------		---------eMail------------	-----------Phone #-------------
+
+Evan Krell (evan.krell@tamucc.edu)
 
 Arun Prassanth Ramaswamy Balasubramanian
 
-Clayton Dittman					clayton.dittman@tamu.edu 	
+Clayton Dittman	(clayton.dittman@tamu.edu)
 
-Evan Krell					evan.krell@tamucc.edu
 
-### Directory Organization
+### Directory Organization and Major Files
 		documentation:
+			InterfaceDiagram.png: System interface design diagram
+			classDiagram.png: System class diagrams
 		simulation: A version of the project based around the Morse simulator
+			prototyping: where algorithms are tested on simulation data
+				predictPath.py: Quadcopter prediction and positioning modules tested
+				evaluate.py: The logs from predictPath are compared to the observed paths 
+				statisticalAnalysis.R: Analysis of predictPath.py results
 			lib: libraries, modules
 			scenes: scripts that setup Morse environments with robots, terrain, sensors, etc
 			robots: scripts that implement behaviors and such for Morse robots
 			scripts: scenarios that use the robots to do tasks in a Morse scene
-			test: unit testing
-		implementation: A version of the project that runs on actual hardware
+			inData: Waypoints and Starting positions for Morse robots
+			outData: Simulations run output
+		implementation: A version of the project that runs on actual hardware (In Progress)
 
+### Qick Start - Test the quadcopter positioning prototype
 
-### Quick Start - Simulation
-Note that this is a very early stage. Some amount of organization/modularity is present, but
-in the case of setting up the MARISA robot... a quick test script is combined with the configuration script.
+0. Be at the top level of this repository
+
+1. Run the predictPath script which does both path prediction and positioning
+
+		python3 simulation/prototyping/predictPath.py -n susan,django,anton \
+			-w simulation/inData/round12/ -p simulation/outData/round12/ > simulation/outData/test.csv
+
+2. Use the evaluation script to see what percent targets were kept in view
+
+		python3 simulation/prototyping/evaluate.py -n susan,django,anton \
+			-w simulation/inData/round12/ -p simulation/outData/round12/ -f simulation/outData/test.csv
+
+### Quick Start - Deploy a robot in Morse
 
 0. Software Requirements (See ###MacOS Setup for setup on Apple Computer)
 
@@ -48,7 +78,7 @@ in the case of setting up the MARISA robot... a quick test script is combined wi
 
 3. Configure the robot named 'Susan' to be a MARISA UGV robot (will run a test case)
 
-		python3 simulation/robots/marisa.py -n susan
+		python3 simulation/robots/marisa.py -n susan -w simulation/inData/susan.waypoints
 
 
 
