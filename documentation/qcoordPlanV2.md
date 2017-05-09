@@ -1,5 +1,8 @@
 ## QCOORD: Track multiple surface vehicles
 
+**This document is outdated. Describes an early plan for target following from before the team was 
+aware of the need to focus on energy considerations.**
+
 This document contains ideas for implementing a system that allows a single UAV (named QCOORD) 
 to constantly reposition itself to keep multiple surface vehicles (TARGETS) in view. 
 
@@ -70,7 +73,7 @@ For example, because of FAA restrictions or potential use case requirements, the
 This means that QCOORD cannot simply raise its altitude when the spread of TARGETS is too far apart,
 but nothing is stopping other system components from autonomously adjusting the altitude.
 
-**Basic Descriptio**n
+**Basic Description**
 
 The core algorithm works by following the centroid X while maintaining a speed, distance, and camera tilt angle
 that ensures InFOV(TARGETS) is TRUE.
