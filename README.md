@@ -1,14 +1,6 @@
-**Note to instructors**
-There is a zip file on Piazza with the version at time of submission.
-I will be doing a complete overhaul of much of the code very soon, 
-so when you read this the live version might make the project look better than it was. 
+**Project has moved**
 
-Also, the two design documents are:
-
-https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/InterfaceDiagram.png
-
-https://raw.githubusercontent.com/ekrell/AI_Robots_multiAgent/master/documentation/classDiagram.png
-
+https://github.com/ekrell/menelaus
 
 ## AI Robots: P6 Multi-Agent Coordination
 
